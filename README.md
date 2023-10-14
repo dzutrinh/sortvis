@@ -6,4 +6,5 @@ This project was compiled and succesfully tested on
 * macOS Monterey
 * Windows 10
 * Ubuntu
+
 Not compatible with Windows 7.
