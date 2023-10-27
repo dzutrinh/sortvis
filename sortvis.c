@@ -30,6 +30,8 @@
  *	- Enabled VT Terminal on Windows (requires Windows 10 or later)
  *	- Now supports colorul texts on Windows CMD
  *	- Code clean-up
+ *	- Animation speed fixed to make it easier to catch up
+ *	- Some minor updates
  */
  
 #include <stdio.h>
@@ -43,11 +45,16 @@ static char		sortTitle[256] = {0};		/* for displaying sort algorithm title */
 static char		menuText[1280] = {0};		/* for setting up main menu */
 static SHADES	colors = {0};				/* for selecting shades for sample rendering */
 #ifdef _WIN32
-static DWORD	vtOldMode = 0;
-static HANDLE	hConsole = 0;
+	static DWORD	vtOldMode = 0;
+	static HANDLE	hConsole = 0;
 #endif
 
 /*---- HELPERS -----------------------------*/
+void die(int code, const char * prompt) {
+	printf("%s", prompt);
+	exit(code);
+}
+
 void waitkey() {
 #ifdef _WIN32
 	system("pause");
@@ -76,6 +83,8 @@ void vt_start() {
 		GetConsoleMode(hConsole, &vtOldMode);
 		SetConsoleMode(hConsole, vtOldMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 	}
+	else 
+		die(-1, "Cannot enable virtual terminal.\n");
 #endif
 }
 
@@ -113,9 +122,11 @@ void menu_init() {
 			"%so----------------------o\n", 
 			VT_COLOR(8), 
 			VT_COLOR(8),
-			VT_COLOR(200), VT_COLOR(197), VT_COLOR(160), VT_COLOR(196), VT_COLOR(208), VT_COLOR(220), 
-			VT_COLOR(226), VT_COLOR(190), VT_COLOR(154), VT_COLOR(76), 	VT_COLOR(48),  VT_COLOR(121), 
-			VT_COLOR(87),  VT_COLOR(45),  VT_COLOR(33),  VT_COLOR(21),  VT_COLOR(129),
+			colors[0], colors[1], colors[2], colors[3], 
+			colors[4], colors[5], colors[6], colors[7], 
+			colors[8], colors[9], colors[10], colors[11],
+			colors[12], colors[13], colors[14], colors[15],
+			colors[16], 
 			VT_COLOR(8),			
 			VT_COLOR(8));
 
@@ -169,12 +180,17 @@ void menu_show() {
 }
 
 void help() {
-	printf("SortVis %d.%d.%d (%s)\n",
-		   (APP_VERSION & 0xFF), (APP_VERSION >> 8) & 0xFF, 
-		   APP_BUILD, 
-		   APP_PLATFORM);
-	printf("Coded by Trinh D.D. Nguyen\n");
+	char buffer[256];
+
+	sprintf(buffer, 
+		    "SortVis %d.%d.%d (%s)\n%s\n",
+		    (APP_VERSION & 0xFF), (APP_VERSION >> 8) & 0xFF, 
+		    APP_BUILD, 
+		    APP_PLATFORM,
+			"Coded by Trinh D.D. Nguyen");
+	die(0, buffer);
 }
+
 /*---- SORT SAMPLES HANDLERS ---------------------*/
 void sample_swap(SAMPLES * s, int a, int b) {
 	int t = s->data[a];
@@ -524,16 +540,11 @@ void sample_sort_cocktail(SAMPLES * s) {
     }
     sample_show(s, -1, -1, -1);
 }
-/*---- MAIN APP ----------------------------*/
-int main(int argc, char ** argv) {
+
+void exec() {
 	SAMPLES	origin, sort;
 	int done = 0;
 	char choice;
-	
-	if (argc > 1 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)) {
-	    help();
-	    return 0;
-	}
 	
 	vt_start();
 	cursor_hide();
@@ -567,9 +578,7 @@ int main(int argc, char ** argv) {
 		case 'J' : sort = origin; sample_sort_count      (&sort);                    break; 
 		case 'K' : sort = origin; sample_sort_quick      (&sort, 0, SAMPLE_SIZE-1);  break;
 
-		case 'T' :
 		case 'L' : title("CURRENT SORT SAMPLES"); sample_show(&origin, -1, -1, -1);  break;
-		case 'R' :
 		case 'M' : title("NEW SAMPLES GENERATED"); 
 				   sample_generate(&origin); 
 			       sample_show(&origin, -1, -1, -1);
@@ -582,7 +591,19 @@ int main(int argc, char ** argv) {
 	}
 	
 	cursor_show();
-	vt_done();
+	vt_done();	
+}
+
+/*---- MAIN APP ----------------------------*/
+int main(int argc, char ** argv) {
+	
+	/* command line parsing */
+	if (argc > 1 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)) {
+	    help();
+	}
+	
+	exec();		/* execute the menu */
+	
 	return 0;	
 }
 
