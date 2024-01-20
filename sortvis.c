@@ -38,6 +38,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "sortvis.h"
 
 /* global variables */
@@ -59,7 +60,7 @@ void waitkey() {
 #ifdef _WIN32
 	system("pause");
 #else
-	system("read -p \"Press ENTER to continue. . .\"");
+	system("read -p 'Press ENTER to continue. . .' var");
 #endif
 }
 

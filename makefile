@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O3 --std=c99 -Wall
+CFLAGS=-O2 -Wall
 LFLAGS=
 
 ifeq ($(OS),Windows_NT)
