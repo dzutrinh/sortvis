@@ -24,12 +24,14 @@
 	#		define	APP_PLATFORM	"Unknown"
 	#	endif
 	#endif
+	#define	PAUSE 	"read -p 'Press ENTER to continue. . .' var"	
 #else
 	#include <windows.h>
 	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 	#	define	ENABLE_VIRTUAL_TERMINAL_PROCESSING	0x0004
 	#endif
 	#define	APP_PLATFORM			"Windows"
+	#define	PAUSE 	"pause"	
 #endif
 
 /*---- SORT SAMPLES DATA--------------------*/

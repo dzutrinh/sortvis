@@ -6,7 +6,7 @@
  *	Coded by Trinh D.D. Nguyen
  *
  *	Compile: 
- *		gcc -O3 sortvis.c -o bin/sortvis -s
+ *		gcc -O2 sortvis.c -o bin/sortvis -s
  *	or:
  *		make
  *	or:
@@ -46,8 +46,8 @@ static char		sortTitle[256] = {0};		/* for displaying sort algorithm title */
 static char		menuText[1280] = {0};		/* for setting up main menu */
 static SHADES	colors = {0};				/* for selecting shades for sample rendering */
 #ifdef _WIN32
-	static DWORD	vtOldMode = 0;
-	static HANDLE	hConsole = 0;
+	static	DWORD	vtOldMode = 0;
+	static	HANDLE	hConsole = 0;
 #endif
 
 /*---- HELPERS -----------------------------*/
@@ -57,17 +57,13 @@ void die(int code, const char * prompt) {
 }
 
 void waitkey() {
-#ifdef _WIN32
-	system("pause");
-#else
-	system("read -p 'Press ENTER to continue. . .' var");
-#endif
+	system(PAUSE);
 }
 
 void mssleep(long ms) {
 #ifndef _WIN32
 	struct timespec rem;
-	struct timespec req = { (int)(ms / 1000), (ms % 1000) * 1000000 };
+	struct timespec req = { (int)(ms / 1000U), (ms % 1000U) * 1000000UL };
 	nanosleep(&req , &rem);
 #else
 	Sleep(ms);
