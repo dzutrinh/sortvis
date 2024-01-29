@@ -2,7 +2,7 @@
  *	SORTVIS.H
  *	---------
  *	Definitions for sort algorithms visualization
- *	Version 0.4.5
+ *	Version 0.4.6
  *	Coded by Trinh D.D. Nguyen
  *
  */
@@ -10,7 +10,7 @@
 #define	__SORTVIS_H__
 
 #define	APP_VERSION	0x0400		/* app version and build number */
-#define	APP_BUILD	0x0005
+#define	APP_BUILD	0x0006
 
 #ifndef _WIN32					/* printf() Unicode support on non-Windows platforms */
 	#include <locale.h>
@@ -35,7 +35,8 @@
 #endif
 
 /*---- SORT SAMPLES DATA--------------------*/
-#define SAMPLE_SPEED	60		/* animation speed (in milliseconds) */
+//#define SAMPLE_SPEED	60		/* animation speed (in milliseconds) */
+extern	int SAMPLE_SPEED;
 #define	SAMPLE_SIZE		18
 #define	BOARD_WIDTH		(SAMPLE_SIZE << 2)
 

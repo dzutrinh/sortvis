@@ -2,7 +2,7 @@
  *	SORTVIS.C
  *	---------
  *	Sort algorithms visualization
- *	Version 0.4.5
+ *	Version 0.4.6
  *	Coded by Trinh D.D. Nguyen
  *
  *	Compile: 
@@ -24,7 +24,7 @@
  *	- Haven't test under Windows 8.1
  *
  *	Updates:
- *	- Added Cocktail Sort, Comb Sort, Counting Sort, Shell Sort
+ *	- Added Cocktail Sort, Comb Sort, Counting Sort, Shell Sort, Radix Sort
  *	- Fixed several compile time warnings
  * 	- Flickering fixed
  *	- Enabled VT Terminal on Windows (requires Windows 10 or later)
@@ -43,12 +43,13 @@
 
 /* global variables */
 static char		sortTitle[256] = {0};		/* for displaying sort algorithm title */
-static char		menuText[1280] = {0};		/* for setting up main menu */
+static char		menuText[1600] = {0};		/* for setting up main menu */
 static SHADES	colors = {0};				/* for selecting shades for sample rendering */
 #ifdef _WIN32
 	static	DWORD	vtOldMode = 0;
 	static	HANDLE	hConsole = 0;
 #endif
+int SAMPLE_SPEED = 60;
 
 /*---- HELPERS -----------------------------*/
 void die(int code, const char * prompt) {
@@ -109,9 +110,9 @@ void title(const char * name) {
 }
 
 void menu_init() {
-	char	menuTitle[1024], 
-			menuCommands[1024],
-			menuFooter[64];
+static char	menuTitle[1024];
+static char menuCommands[1600];
+static char menuFooter[64];
 	
 	sprintf(menuTitle, 
 			"%so----------------------o\n"
@@ -139,12 +140,14 @@ void menu_init() {
 			"%s| %sI%s. Heap Sort         %s|\n"
 			"%s| %sJ%s. Counting Sort     %s|\n"
 			"%s| %sK%s. Quick Sort        %s|\n"
+			"%s| %sL%s. Radix Sort        %s|\n"
 			"%s+----------------------+\n"
-			"%s| %sL%s. View data         %s|\n"
-			"%s| %sM%s. Generate new data %s|\n"	
+			"%s| %sM%s. View data         %s|\n"
+			"%s| %sN%s. Generate new data %s|\n"	
 			"%s+----------------------+\n"
-			"%s| %sN%s. Exit              %s|\n"
+			"%s| %sO%s. Exit              %s|\n"
 			"%so----------------------o\n",
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
 			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
 			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
 			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
@@ -164,7 +167,7 @@ void menu_init() {
 			VT_COLOR(8));
 	
 	sprintf(menuFooter, 
-			"%sChoice (%sA%s-%sN%s): ",
+			"%sChoice (%sA%s-%sO%s): ",
 			VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR);
 
 	strcpy(menuText, menuTitle);
@@ -537,6 +540,42 @@ void sample_sort_cocktail(SAMPLES * s) {
     }
     sample_show(s, -1, -1, -1);
 }
+/*---- RADIX SORT -----------------------*/
+void count_sort_radix(SAMPLES * s, int exp) {
+	SAMPLES output;
+	int count[10] = { 0 };
+
+	output.max = s->max;
+	for (int i = 0; i < SAMPLE_SIZE; i++) {
+		output.data[i] = 1;
+		count[(s->data[i] / exp) % 10]++;
+	}
+
+	for (int i = 1; i < 10; i++)
+		count[i] += count[i - 1];
+
+	for (int i = SAMPLE_SIZE - 1; i >= 0; i--) {
+		output.data[count[(s->data[i] / exp) % 10] - 1] = s->data[i];
+		count[(s->data[i] / exp) % 10]--;
+		sample_show(s, i, -1, -1);
+    	mssleep(SAMPLE_SPEED);
+	}
+
+	for (int i = 0; i < SAMPLE_SIZE; i++) {
+		s->data[i] = output.data[i];
+		sample_show(s, i, -1, -1);
+    	mssleep(SAMPLE_SPEED);
+	}
+}
+
+void sample_sort_radix(SAMPLES * s) {	
+    title("RADIX SORT");
+	int m = s->max;
+	for (int exp = 1; m / exp > 0; exp *= 10) {
+		count_sort_radix(s, exp);
+	}
+    sample_show(s, -1, -1, -1);
+}
 
 void exec() {
 	SAMPLES	origin, sort;
@@ -574,17 +613,18 @@ void exec() {
 		case 'I' : sort = origin; sample_sort_heap       (&sort);                    break;
 		case 'J' : sort = origin; sample_sort_count      (&sort);                    break; 
 		case 'K' : sort = origin; sample_sort_quick      (&sort, 0, SAMPLE_SIZE-1);  break;
+		case 'L' : sort = origin; sample_sort_radix      (&sort);					 break;
 
-		case 'L' : title("CURRENT SORT SAMPLES"); sample_show(&origin, -1, -1, -1);  break;
-		case 'M' : title("NEW SAMPLES GENERATED"); 
+		case 'M' : title("CURRENT SORT SAMPLES"); sample_show(&origin, -1, -1, -1);  break;
+		case 'N' : title("NEW SAMPLES GENERATED"); 
 				   sample_generate(&origin); 
 			       sample_show(&origin, -1, -1, -1);
 				   break;
 		
 		case 'X' :
-		case 'N' : done = 1; break;
+		case 'O' : done = 1; break;
 		}
-		if (choice >= 'A' && choice <= 'M') waitkey();
+		if (choice >= 'A' && choice <= 'N') waitkey();
 	}
 	
 	cursor_show();
@@ -598,7 +638,7 @@ int main(int argc, char ** argv) {
 	if (argc > 1 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)) {
 	    help();
 	}
-	
+
 	exec();		/* execute the menu */
 	
 	return 0;	
