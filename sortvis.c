@@ -32,6 +32,7 @@
  *	- Code clean-up
  *	- Animation speed fixed to make it easier to catch up
  *	- Some minor updates
+ *	- Animation speed is now customizable via command line parameter.
  */
  
 #include <stdio.h>
@@ -179,9 +180,8 @@ void menu_show() {
 	fputs(menuText, stdout);	
 }
 
-void help() {
+void version() {
 	char buffer[256];
-
 	sprintf(buffer, 
 		    "SortVis %d.%d.%d (%s)\n%s\n",
 		    (APP_VERSION & 0xFF), (APP_VERSION >> 8) & 0xFF, 
@@ -189,6 +189,14 @@ void help() {
 		    APP_PLATFORM,
 			"Coded by Trinh D.D. Nguyen");
 	die(0, buffer);
+}
+
+void help() {
+	die(0, 	"usage: sortvis [--version|-v] [--help|-h] [--speed|-s n]\n\n"
+			"whereas:\n"
+			"\t--version|-v\tdisplay program version information\n"
+			"\t--help|-h\tdisplay this message\n"
+			"\t--speed|-s\tspecify animation speed\n\n");
 }
 
 /*---- SORT SAMPLES HANDLERS ---------------------*/
@@ -635,12 +643,20 @@ void exec() {
 int main(int argc, char ** argv) {
 	
 	/* command line parsing */
-	if (argc > 1 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)) {
-	    help();
+	if (argc > 1) {
+		for (int i = 1; i < argc; i++) {
+			if(strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0)
+				version();
+			if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+				help();
+			if(strcmp(argv[i], "--speed") == 0 || strcmp(argv[i], "-s") == 0) {
+				if (argv[i+1])
+					sscanf(argv[i+1], "%d", &SAMPLE_SPEED);
+				else
+					die(0, "No value given.\n");
+			}
+		}
 	}
-
-	exec();		/* execute the menu */
-	
+	exec();		/* execute the menu */	
 	return 0;	
 }
-
