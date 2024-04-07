@@ -53,3 +53,4 @@ dkms.conf
 sortvis-linux
 sortvis-darwin
 .DS_Store
+.vscode/settings.json

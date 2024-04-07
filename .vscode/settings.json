@@ -34,5 +34,12 @@
         "*.tcc": "c",
         "format": "c",
         "stdio.h": "c"
-    }
+    },
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/dzutrinh/Documents/GitHub/sortvis",
+            "binaryPath": "/home/dzutrinh/Documents/GitHub/sortvis/sortvis-linux",
+            "binaryArgs": []
+        }
+    ]
 }
