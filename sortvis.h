@@ -2,7 +2,7 @@
  *	SORTVIS.H
  *	---------
  *	Definitions for sort algorithms visualization
- *	Version 0.4.6
+ *	Version 0.4.7
  *	Coded by Trinh D.D. Nguyen
  *
  */
@@ -10,7 +10,7 @@
 #define	__SORTVIS_H__
 
 #define	APP_VERSION	0x0400		/* app version and build number */
-#define	APP_BUILD	0x0006
+#define	APP_BUILD	0x0007
 
 #ifndef _WIN32					/* printf() Unicode support on non-Windows platforms */
 	#include <locale.h>
@@ -66,14 +66,15 @@ typedef	char SHADES[SAMPLE_SIZE][16];
 #	define	VEXTRA		'#'
 #endif
 
-#define	VT_COLOR(v)		("\x1B[38;5;"#v"m")
-#define	VT_BKGD(v)		("\x1B[48;5;"#v"m")
-#define	VT_ATTR(v)		("\x1B["#v"m")
-#define	VT_CLEAR		("\x1B[H\x1B[2J")
-#define	VT_CURSORSHOW	("\x1B[?25h")
-#define	VT_CURSORHIDE	("\x1B[?25l")
-#define	VT_DEFAULTATTR	("\x1B[0m")
-#define	VT_CURSORHOME	("\x1B[H")
+#define	VT_COLOR(v)		"\x1B[38;5;"#v"m"
+#define	VT_BKGD(v)		"\x1B[48;5;"#v"m"
+#define	VT_ATTR(v)		"\x1B["#v"m"
+#define	VT_CLEAR		"\x1B[H\x1B[2J"
+#define	VT_CURSORSHOW	"\x1B[?25h"
+#define	VT_CURSORHIDE	"\x1B[?25l"
+#define	VT_DEFAULTATTR	"\x1B[0m"
+#define	VT_CURSORHOME	"\x1B[H"
+#define VT_RESET		VT_DEFAULTATTR
 
 const SHADES SHADE_RAINBOW = 				/* rainbow colors for data bars */
 	{

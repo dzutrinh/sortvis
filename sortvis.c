@@ -2,7 +2,7 @@
  *	SORTVIS.C
  *	---------
  *	Sort algorithms visualization
- *	Version 0.4.6
+ *	Version 0.4.7
  *	Coded by Trinh D.D. Nguyen
  *
  *	Compile: 
@@ -13,7 +13,7 @@
  *		mingw32-make
  *	
  *	Tested on the following platforms:
- *	- Windows 10 Pro, LLVM MinGW64 GCC 16
+ *	- Windows 10 Pro, LLVM MinGW64 GCC 18
  *	- Windows 10 Pro, Dev-C++ with TDM-GCC 4.9.2
  *	- Windows 10 Pro, Dev-C++ with MinGW64 13
  *	- macOS Monterey, LLVM Clang 14
@@ -33,6 +33,8 @@
  *	- Animation speed fixed to make it easier to catch up
  *	- Some minor updates
  *	- Animation speed is now customizable via command line parameter.
+ *	- New samples generated can now be randomized, ascending or descending.
+ *	- Minor optimization to sort algorithms added.
  */
  
 #include <stdio.h>
@@ -210,12 +212,48 @@ int sample_height(SAMPLES * s, int i) {
 	return 	(s->max-s->data[i]);
 }
 
-void sample_generate(SAMPLES * s) {
+void sample_generate_ascending(SAMPLES * s) {
 	int i;
 	for (i = 0; i < SAMPLE_SIZE; i++) s->data[i] = i+1;
 	s->max = i;
+}
+
+void sample_generate_descending(SAMPLES * s) {
+	int i;
+	for (i = 0; i < SAMPLE_SIZE; i++) s->data[i] = SAMPLE_SIZE-i;
+	s->max = i;
+}
+
+void sample_generate_random(SAMPLES * s) {
+	int i;
+	sample_generate_ascending(s);
 	for (i = 0; i < SAMPLE_SIZE; i++)	/* shuffling */
 		sample_swap(s, rand() % SAMPLE_SIZE, rand() % SAMPLE_SIZE);
+}
+
+bool sample_generate(SAMPLES * s) {
+	int i;
+	char choice;
+	
+	clear();
+	printf(VT_COLOR(220)"GENERATE NEW SAMPLES\n");
+	printf(     VT_RESET"--------------------\n");
+	printf(VT_COLOR(150)"A"VT_RESET". Randomized\n");
+	printf(VT_COLOR(150)"B"VT_RESET". Acending\n");
+	printf(VT_COLOR(150)"C"VT_RESET". Descending\n");
+	printf(     VT_RESET"--------------------\n");
+	printf(VT_COLOR(170)"D"VT_RESET". Back\n");
+	printf(VT_RESET"Choice: ");
+	fflush(stdin);
+	scanf("%c", &choice);
+	choice = toupper(choice);
+	switch (choice) {
+	case 'A': sample_generate_random(s); break;
+	case 'B': sample_generate_ascending(s); break;
+	case 'C': sample_generate_descending(s); break;
+	case 'D': return false;
+	}
+	return true;
 }
 
 void sample_show(SAMPLES * s, int u, int v, int t){
@@ -278,14 +316,19 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 /*---- INTERCHANGE SORT --------------------*/
 void sample_sort_interchange(SAMPLES * s) {
 	int i, j;
+	bool swapped;
     title("INTERCHANGE SORT");
 	for (i = 0; i < SAMPLE_SIZE-1; i++) {
+		swapped = false;
 		for (j = i + 1; j < SAMPLE_SIZE; j++) {
-			if (s->data[i] > s->data[j]) 
+			if (s->data[i] > s->data[j]) {
 				sample_swap(s, i, j);
+				swapped = true;
+			}
 			sample_show(s, i, j, -1);
 			mssleep(SAMPLE_SPEED);
 		}
+		if (!swapped) break;
 	}
 	sample_show(s, -1, -1, -1);
 }
@@ -310,14 +353,19 @@ void sample_sort_selection(SAMPLES * s) {
 /*---- BUBBLE SORT -------------------------*/
 void sample_sort_bubble(SAMPLES * s) {
 	int i, j;
+	bool swapped;
     title("BUBBLE SORT");
 	for (i = 0; i < SAMPLE_SIZE-1; i++) {
+		swapped = false;
 		for (j = 0; j < SAMPLE_SIZE-i-1; j++) {
-			if (s->data[j] > s->data[j+1])
+			if (s->data[j] > s->data[j+1]) {
 				sample_swap(s, j, j+1);
+				swapped = true;
+			}
 			sample_show(s, j, j+1, -1);
 			mssleep(SAMPLE_SPEED);
 		}
+		if (!swapped) break;
 	}
 	sample_show(s, -1, -1, -1);
 }
@@ -593,7 +641,7 @@ void exec() {
 	vt_start();
 	cursor_hide();
 	srand(time(NULL));
-	sample_generate(&origin); 
+	sample_generate_random(&origin); 
 	set_shades(SHADE_RAINBOW);
 	menu_init();
 	
@@ -610,27 +658,32 @@ void exec() {
 		clear();
 
 		switch(choice) {
-		case 'A' : sort = origin; sample_sort_interchange(&sort);                    break;
-		case 'B' : sort = origin; sample_sort_bubble     (&sort);                    break;
-		case 'C' : sort = origin; sample_sort_cocktail   (&sort);                    break;
-		case 'D' : sort = origin; sample_sort_selection  (&sort);                    break;
-		case 'E' : sort = origin; sample_sort_insertion  (&sort);                    break;
-		case 'F' : sort = origin; sample_sort_shell      (&sort);                    break;
-		case 'G' : sort = origin; sample_sort_comb       (&sort);                    break;
-		case 'H' : sort = origin; sample_sort_merge      (&sort, 0, SAMPLE_SIZE-1);  break;
-		case 'I' : sort = origin; sample_sort_heap       (&sort);                    break;
-		case 'J' : sort = origin; sample_sort_count      (&sort);                    break; 
-		case 'K' : sort = origin; sample_sort_quick      (&sort, 0, SAMPLE_SIZE-1);  break;
-		case 'L' : sort = origin; sample_sort_radix      (&sort);					 break;
+		case 'A' : 	sort = origin; sample_sort_interchange(&sort);                    break;
+		case 'B' : 	sort = origin; sample_sort_bubble     (&sort);                    break;
+		case 'C' : 	sort = origin; sample_sort_cocktail   (&sort);                    break;
+		case 'D' : 	sort = origin; sample_sort_selection  (&sort);                    break;
+		case 'E' : 	sort = origin; sample_sort_insertion  (&sort);                    break;
+		case 'F' : 	sort = origin; sample_sort_shell      (&sort);                    break;
+		case 'G' : 	sort = origin; sample_sort_comb       (&sort);                    break;
+		case 'H' : 	sort = origin; sample_sort_merge      (&sort, 0, SAMPLE_SIZE-1);  break;
+		case 'I' : 	sort = origin; sample_sort_heap       (&sort);                    break;
+		case 'J' : 	sort = origin; sample_sort_count      (&sort);                    break; 
+		case 'K' : 	sort = origin; sample_sort_quick      (&sort, 0, SAMPLE_SIZE-1);  break;
+		case 'L' : 	sort = origin; sample_sort_radix      (&sort);					  break;
 
-		case 'M' : title("CURRENT SORT SAMPLES"); sample_show(&origin, -1, -1, -1);  break;
-		case 'N' : title("NEW SAMPLES GENERATED"); 
-				   sample_generate(&origin); 
-			       sample_show(&origin, -1, -1, -1);
-				   break;
+		case 'M' : 	title("CURRENT SORT SAMPLES"); sample_show(&origin, -1, -1, -1);  break;
+		case 'N' : 	if (sample_generate(&origin)) {
+						title("NEW SAMPLES GENERATED"); 
+			       		sample_show(&origin, -1, -1, -1);
+					}
+					else {
+						title("CURRENT SAMPLES"); 
+			       		sample_show(&origin, -1, -1, -1);
+					}		
+				   	break;
 		
 		case 'X' :
-		case 'O' : done = 1; break;
+		case 'O' : 	done = 1; break;
 		}
 		if (choice >= 'A' && choice <= 'N') waitkey();
 	}
