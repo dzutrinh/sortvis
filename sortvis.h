@@ -9,6 +9,12 @@
 #ifndef __SORTVIS_H__
 #define	__SORTVIS_H__
 
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
 #define	APP_VERSION	0x0400		/* app version and build number */
 #define	APP_BUILD	0x0007
 
@@ -24,21 +30,14 @@
 	#		define	APP_PLATFORM	"Unknown"
 	#	endif
 	#endif
-	#define	PAUSE 	"read -p 'Press ENTER to continue. . .' var"	
 #else
-	#include <windows.h>
-	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
-	#	define	ENABLE_VIRTUAL_TERMINAL_PROCESSING	0x0004
-	#endif
 	#define	APP_PLATFORM			"Windows"
-	#define	PAUSE 	"pause"	
 #endif
 
 /*---- SORT SAMPLES DATA--------------------*/
-//#define SAMPLE_SPEED	60		/* animation speed (in milliseconds) */
-extern	int SAMPLE_SPEED;
 #define	SAMPLE_SIZE		18
 #define	BOARD_WIDTH		(SAMPLE_SIZE << 2)
+int SAMPLE_SPEED = 60;		/* animation speed (in milliseconds) */
 
 typedef enum {false, true} bool;
 
@@ -66,15 +65,7 @@ typedef	char SHADES[SAMPLE_SIZE][16];
 #	define	VEXTRA		'#'
 #endif
 
-#define	VT_COLOR(v)		"\x1B[38;5;"#v"m"
-#define	VT_BKGD(v)		"\x1B[48;5;"#v"m"
-#define	VT_ATTR(v)		"\x1B["#v"m"
-#define	VT_CLEAR		"\x1B[H\x1B[2J"
-#define	VT_CURSORSHOW	"\x1B[?25h"
-#define	VT_CURSORHIDE	"\x1B[?25l"
-#define	VT_DEFAULTATTR	"\x1B[0m"
-#define	VT_CURSORHOME	"\x1B[H"
-#define VT_RESET		VT_DEFAULTATTR
+#include "vt.h"
 
 const SHADES SHADE_RAINBOW = 				/* rainbow colors for data bars */
 	{
@@ -142,6 +133,197 @@ const SHADES SHADE_GRAYSCALE =
 		VT_COLOR(252),		/* color 17 */
 	};
 
+#include "helpers.h"
+
+/* global variables */
+static char		sortTitle[256] = {0};		/* for displaying sort algorithm title */
+static char		menuText[1600] = {0};		/* for setting up main menu */
+static SHADES	colors = {0};				/* for selecting shades for sample rendering */
+
+void set_shades(const SHADES shade) { memcpy(colors, shade, sizeof(SHADES)); }
+
+void title(const char * name) {
+	sprintf(sortTitle,	"%s%*s%s<%s<%s<%s< %s%s %s>%s>%s>%s>", 
+						VT_CURSORHOME,
+						(int)(BOARD_WIDTH-strlen(name)-10)>>1,"",
+						VT_COLOR(241), VT_COLOR(244), VT_COLOR(247), VT_COLOR(250),
+						VT_COLOR(231), name,
+						VT_COLOR(250), VT_COLOR(247), VT_COLOR(244), VT_COLOR(241));
+}
+
+#include "algs.h"
+
+void app_init() {
+
+	if (!vt_start())
+		die(-1, "Cannot enable virtual terminal.\n");
+
+	cursor_hide();
+	srand(time(NULL));
+	set_shades(SHADE_RAINBOW);
+
+static char	menuTitle[1024];
+static char menuCommands[1600];
+static char menuFooter[64];
+	
+	sprintf(menuTitle, 
+			"%so----------------------o\n"
+			"%s|  %sS%sO%sR%sT %sV%sI%sS%sU%sA%sL%sI%sZ%sA%sT%sI%sO%sN  %s|\n"
+			"%so----------------------o\n", 
+			VT_COLOR(8), 
+			VT_COLOR(8),
+			colors[0], colors[1], colors[2], colors[3], 
+			colors[4], colors[5], colors[6], colors[7], 
+			colors[8], colors[9], colors[10], colors[11],
+			colors[12], colors[13], colors[14], colors[15],
+			colors[16], 
+			VT_COLOR(8),			
+			VT_COLOR(8));
+
+	sprintf(menuCommands, 
+			"%s| %sA%s. Interchange Sort  %s|\n"
+			"%s| %sB%s. Bubble Sort       %s|\n"
+			"%s| %sC%s. Cocktail Sort     %s|\n"
+			"%s| %sD%s. Selection Sort    %s|\n"
+			"%s| %sE%s. Insertion Sort    %s|\n"
+			"%s| %sF%s. Shell Sort        %s|\n"
+			"%s| %sG%s. Comb Sort         %s|\n"
+			"%s| %sH%s. Merge Sort        %s|\n"
+			"%s| %sI%s. Heap Sort         %s|\n"
+			"%s| %sJ%s. Counting Sort     %s|\n"
+			"%s| %sK%s. Quick Sort        %s|\n"
+			"%s| %sL%s. Radix Sort        %s|\n"
+			"%s+----------------------+\n"
+			"%s| %sM%s. View data         %s|\n"
+			"%s| %sN%s. Generate new data %s|\n"	
+			"%s+----------------------+\n"
+			"%s| %sO%s. Exit              %s|\n"
+			"%so----------------------o\n",
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(147), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(147), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(228),  VT_DEFAULTATTR, VT_COLOR(8), 
+			VT_COLOR(8));
+	
+	sprintf(menuFooter, 
+			"%sChoice (%sA%s-%sO%s): ",
+			VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR);
+
+	strcpy(menuText, menuTitle);
+	strcat(menuText, menuCommands);
+	strcat(menuText, menuFooter);
+}
+
+void app_menu() {
+	fputs(menuText, stdout);	
+}
+
+void app_version() {
+	char buffer[256];
+	sprintf(buffer, 
+			"--------------------------\n"
+		    "SortVis %d.%d.%d (%s)\n%s\n"
+			"--------------------------\n",
+		    (APP_VERSION & 0xFF), (APP_VERSION >> 8) & 0xFF, 
+		    APP_BUILD, APP_PLATFORM,
+			"Coded by Trinh D.D. Nguyen");
+	die(0, buffer);
+}
+
+void app_help() {
+	die(0, 	"usage: sortvis [--version|-v] [--help|-h] [--speed|-s n]\n\n"
+			"whereas:\n"
+			"\t--version|-v\tdisplay program version information\n"
+			"\t--help|-h\tdisplay this message\n"
+			"\t--speed|-s\tspecify animation speed\n\n");
+}
+
+void app_exec() {
+	SAMPLES	origin, sort;
+	int done = 0;
+	char choice;
+	
+	sample_generate_random(&origin); 
+	
+	while (!done) {
+				
+		clear();
+		app_menu();
+		
+		fflush(stdin); scanf("%c", &choice);	
+		choice = toupper(choice & 0xFF);
+		
+		if (choice < 'A' && choice > 'M') continue;
+				
+		clear();
+
+		switch(choice) {
+		case 'A' : 	sort = origin; sample_sort_interchange(&sort);                    break;
+		case 'B' : 	sort = origin; sample_sort_bubble     (&sort);                    break;
+		case 'C' : 	sort = origin; sample_sort_cocktail   (&sort);                    break;
+		case 'D' : 	sort = origin; sample_sort_selection  (&sort);                    break;
+		case 'E' : 	sort = origin; sample_sort_insertion  (&sort);                    break;
+		case 'F' : 	sort = origin; sample_sort_shell      (&sort);                    break;
+		case 'G' : 	sort = origin; sample_sort_comb       (&sort);                    break;
+		case 'H' : 	sort = origin; sample_sort_merge      (&sort, 0, SAMPLE_SIZE-1);  break;
+		case 'I' : 	sort = origin; sample_sort_heap       (&sort);                    break;
+		case 'J' : 	sort = origin; sample_sort_count      (&sort);                    break; 
+		case 'K' : 	sort = origin; sample_sort_quick      (&sort, 0, SAMPLE_SIZE-1);  break;
+		case 'L' : 	sort = origin; sample_sort_radix      (&sort);					  break;
+
+		case 'M' : 	title("CURRENT SORT SAMPLES"); sample_show(&origin, -1, -1, -1);  break;
+		case 'N' : 	if (sample_generate(&origin)) {
+						title("NEW SAMPLES GENERATED"); 
+			       		sample_show(&origin, -1, -1, -1);
+					}
+					else {
+						title("CURRENT SAMPLES"); 
+			       		sample_show(&origin, -1, -1, -1);
+					}		
+				   	break;
+		
+		case 'X' :
+		case 'O' : 	done = 1; break;
+		}
+		if (choice >= 'A' && choice <= 'N') waitkey();
+	}
+}
+
+void app_close() {
+	cursor_show();
+	vt_done();	
+}
+
+void app_params(int argc, char ** argv) {
+	/* command line parsing */
+	if (argc > 1) {
+		for (int i = 1; i < argc; i++) {
+			if(strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0)
+				app_version();
+			if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+				app_help();
+			if(strcmp(argv[i], "--speed") == 0 || strcmp(argv[i], "-s") == 0) {
+				if (argv[i+1])
+					sscanf(argv[i+1], "%d", &SAMPLE_SPEED);
+				else
+					die(0, "No value given.\n");
+			}
+		}
+	}
+}
 
 #endif
 
