@@ -326,4 +326,3 @@ void app_params(int argc, char ** argv) {
 }
 
 #endif
-
