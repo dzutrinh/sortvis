@@ -115,19 +115,15 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 /*---- INTERCHANGE SORT --------------------*/
 void sample_sort_interchange(SAMPLES * s) {
 	int i, j;
-	bool swapped;
     title("INTERCHANGE SORT");
 	for (i = 0; i < SAMPLE_SIZE-1; i++) {
-		swapped = false;
 		for (j = i + 1; j < SAMPLE_SIZE; j++) {
 			if (s->data[i] > s->data[j]) {
 				sample_swap(s, i, j);
-				swapped = true;
 			}
 			sample_show(s, i, j, -1);
 			mssleep(SAMPLE_SPEED);
 		}
-		if (!swapped) break;
 	}
 	sample_show(s, -1, -1, -1);
 }
