@@ -15,8 +15,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#define	APP_VERSION	0x0400		/* app version and build number */
-#define	APP_BUILD	0x0007
+#define	APP_VERSION	0x0500		/* app version and build number */
+#define	APP_BUILD	0x0000
 
 #ifndef _WIN32					/* printf() Unicode support on non-Windows platforms */
 	#include <locale.h>

@@ -2,7 +2,7 @@
  *	SORTVIS.C
  *	---------
  *	Sort algorithms visualization
- *	Version 0.4.7
+ *	Version 0.5.0
  *	Coded by Trinh D.D. Nguyen
  *	MIT licensed
  *
@@ -14,11 +14,7 @@
  *		mingw32-make
  *	
  *	Tested on the following platforms:
- *	- Windows 10 Pro, LLVM MinGW64 GCC 18
- *	- Windows 10 Pro, Dev-C++ with TDM-GCC 4.9.2
- *	- Windows 10 Pro, Dev-C++ with MinGW64 13
- *	- macOS Monterey, LLVM Clang 14
- *	- Ubuntu 23.04  , GNU C/C++ 13
+ *	- macOS Tahoe, LLVM Clang 17
  *
  *	Notes:
  *	- Windows 7 or ealier are not supported.
@@ -37,6 +33,9 @@
  *	- New samples generated can now be randomized, ascending or descending.
  *	- Minor optimizations to some sort algorithms added.
  *	- Code clean-up
+ *  - Menu navigation via arrow keys added.
+ *  - Test suite added as separate program "test.c"
+ *  - Other minor fixes and improvements.
  */
 
 #include "sortvis.h"
