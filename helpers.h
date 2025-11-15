@@ -4,12 +4,33 @@
 #include <stdlib.h>
 #ifdef _WIN32
 	#include <windows.h>
+	#include <conio.h>
+#else
+	#include <termios.h>
+	#include <unistd.h>
 #endif
 
 /*---- HELPERS -----------------------------*/
 void die(int code, const char * prompt) {
 	printf("%s", prompt);
 	exit(code);
+}
+
+/* Read a single character without waiting for Enter */
+int getch() {
+#ifdef _WIN32
+	return _getch();
+#else
+	struct termios oldt, newt;
+	int ch;
+	tcgetattr(STDIN_FILENO, &oldt);
+	newt = oldt;
+	newt.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	ch = getchar();
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	return ch;
+#endif
 }
 
 void waitkey() {

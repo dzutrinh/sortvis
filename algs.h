@@ -1,6 +1,9 @@
 #ifndef __SORTVIS_ALGS__
 #define __SORTVIS_ALGS__
 
+/*---- GLOBAL FLAGS --------------------------------*/
+bool ENABLE_VISUALIZATION = true;	/* set to false to disable visualization output */
+
 /*---- SORT SAMPLES HANDLERS ---------------------*/
 void sample_swap(SAMPLES * s, int a, int b) {
 	int t = s->data[a];
@@ -33,24 +36,73 @@ void sample_generate_random(SAMPLES * s) {
 
 bool sample_generate(SAMPLES * s) {
 	char choice;
+	int selected = 0;
+	const char* items[] = {
+		"A. Randomized",
+		"B. Ascending",
+		"C. Descending",
+		"",
+		"D. Back"
+	};
 	
-	clear();
-	printf(VT_COLOR(220)"GENERATE NEW SAMPLES\n");
-	printf(     VT_RESET"--------------------\n");
-	printf(VT_COLOR(150)"A"VT_RESET". Randomized\n");
-	printf(VT_COLOR(150)"B"VT_RESET". Acending\n");
-	printf(VT_COLOR(150)"C"VT_RESET". Descending\n");
-	printf(     VT_RESET"--------------------\n");
-	printf(VT_COLOR(170)"D"VT_RESET". Back\n");
-	printf(VT_RESET"Choice: ");
-	fflush(stdin);
-	scanf("%c", &choice);
-	choice = toupper(choice);
-	switch (choice) {
-	case 'A': sample_generate_random(s); break;
-	case 'B': sample_generate_ascending(s); break;
-	case 'C': sample_generate_descending(s); break;
-	case 'D': return false;
+	while (1) {
+		clear();
+		printf(VT_COLOR(220)"GENERATE NEW SAMPLES\n");
+		printf(VT_RESET"--------------------\n");
+		
+		for (int i = 0; i < 5; i++) {
+			if (items[i][0] == '\0') {
+				printf(VT_RESET"--------------------\n");
+			} else {
+				if (i == selected) {
+					printf(VT_ATTR(7)"%-20s"VT_DEFAULTATTR"\n", items[i]);
+				} else {
+					printf(VT_COLOR(150)"%c"VT_RESET"%s\n", items[i][0], items[i] + 1);
+				}
+			}
+		}
+		
+		printf(VT_RESET"\nUse "VT_ATTR(33)"\u2191\u2193"VT_DEFAULTATTR" or "VT_ATTR(33)"A-D"VT_DEFAULTATTR", press "VT_ATTR(33)"ENTER"VT_DEFAULTATTR" to select\n");
+		fflush(stdout);
+		
+		int ch = getch();
+		
+		/* Handle arrow keys */
+		if (ch == 27 || ch == 224) {
+			getch();
+			ch = getch();
+			if (ch == 'A' || ch == 72) {  /* Up arrow */
+				do {
+					selected = (selected - 1 + 5) % 5;
+				} while (selected == 3);  /* Skip separator */
+				continue;
+			} else if (ch == 'B' || ch == 80) {  /* Down arrow */
+				do {
+					selected = (selected + 1) % 5;
+				} while (selected == 3);  /* Skip separator */
+				continue;
+			}
+		} else if (ch == '\n' || ch == '\r') {  /* Enter */
+			const char mapping[] = "ABCD";
+			choice = (selected == 4) ? 'D' : mapping[selected];
+		} else {
+			choice = toupper(ch & 0xFF);
+		}
+		
+		switch (choice) {
+		case 'A': sample_generate_random(s); return true;
+		case 'B': sample_generate_ascending(s); return true;
+		case 'C': sample_generate_descending(s); return true;
+		case 'D': return false;
+		default: continue;
+		}
+	}
+}
+
+bool sample_is_sorted(SAMPLES * s) {
+	for (int i = 0; i < SAMPLE_SIZE - 1; i++) {
+		if (s->data[i] > s->data[i + 1])
+			return false;
 	}
 	return true;
 }
@@ -58,21 +110,28 @@ bool sample_generate(SAMPLES * s) {
 void sample_show(SAMPLES * s, int u, int v, int t){
 	int i, j, c;
 	char temp[1024], buffer[64], sep[BOARD_WIDTH+1];
+	static char screen[8192];  /* Large buffer for entire screen */
+	
+	/* skip visualization if disabled */
+	if (!ENABLE_VISUALIZATION) return;
+	
+	/* Clear screen buffer */
+	screen[0] = 0;
 	
 	/* setup horizontal line */
 	for (i = 0; i < BOARD_WIDTH; i++) 
 		sep[i] = VBAR;
 	sep[BOARD_WIDTH] = 0;
 
-	/* draw sort algorithm title */	
-	puts(sortTitle);
+	/* Add sort algorithm title to buffer */
+	strcat(screen, sortTitle);
+	strcat(screen, "\n");
 	
-	/* draw top horz, line */
-	strcpy(temp, VT_COLOR(8));
-	strcat(temp, sep);
-	puts(temp);
+	/* Add top horz. line to buffer */
+	sprintf(temp, "%s%s\n", VT_COLOR(8), sep);
+	strcat(screen, temp);
 
-	/* draw sort samples */
+	/* Add sort samples to buffer */
 	for (j = 0; j < s->max; j++) {
 		temp[0] = 0;
 		for (i = 0; i < SAMPLE_SIZE; i++) {
@@ -80,15 +139,15 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 			sprintf(buffer, " %s%lc%lc ", colors[s->data[i]-1], (wint_t) c, (wint_t) c);
 			strcat(temp, buffer);
 		}
-		puts(temp);
+		strcat(temp, "\n");
+		strcat(screen, temp);
 	}
 	
-	/* draw bottom horz. line */
-	strcpy(temp, VT_COLOR(8));
-	strcat(temp, sep);
-	puts(temp);
+	/* Add bottom horz. line to buffer */
+	sprintf(temp, "%s%s\n", VT_COLOR(8), sep);
+	strcat(screen, temp);
 	
-	/* draw sort values */
+	/* Add sort values to buffer */
 	temp[0] = 0;
 	for (i = 0; i < SAMPLE_SIZE; i++) {
 		if (i == u || i == v)
@@ -97,9 +156,10 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 			sprintf(buffer, "%s%3d ", VT_COLOR(244), s->data[i]);			
 		strcat(temp, buffer);
 	}
-	puts(temp);
+	strcat(temp, "\n");
+	strcat(screen, temp);
 
-	/* draw current indices */
+	/* Add current indices to buffer */
 	strcpy(temp, VT_COLOR(231));
 	for (i = 0; i < SAMPLE_SIZE; i++) {
 		if (i == u) c = VCURRENT; else 
@@ -109,7 +169,13 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 		sprintf(buffer, " %lc%lc ", (wint_t)c, (wint_t)c);
 		strcat(temp, buffer);
 	}
-	puts(temp);
+	strcat(temp, "\n");
+	strcat(screen, temp);
+	
+	/* Write entire screen at once (atomic operation) */
+	fputs(screen, stdout);
+	fflush(stdout);
+	
 	reset_colors();
 }
 /*---- INTERCHANGE SORT --------------------*/
@@ -239,8 +305,8 @@ int partition(SAMPLES * s, int low, int high)
 {
     int i = low, j = high, pivot = s->data[low];
     while (i < j) {
-        while (pivot >= s->data[i]) i++;
-        while (pivot < s->data[j]) j--;
+        while (i < high && pivot >= s->data[i]) i++;
+        while (j > low && pivot < s->data[j]) j--;
         if (i < j) {
 			sample_swap(s, i, j);
     	}
@@ -253,14 +319,18 @@ int partition(SAMPLES * s, int low, int high)
     return j;
 }
   
-void sample_sort_quick(SAMPLES * s, int low, int high) {
-	title("QUICK SORT");
+void sample_sort_quick_recursive(SAMPLES * s, int low, int high) {
     if (low < high) {
         int pivot = partition(s, low, high);
-        sample_sort_quick(s, low, pivot - 1);
-        sample_sort_quick(s, pivot + 1, high);
+        sample_sort_quick_recursive(s, low, pivot - 1);
+        sample_sort_quick_recursive(s, pivot + 1, high);
 	    sample_show(s, low, high, pivot);
     }
+}
+
+void sample_sort_quick(SAMPLES * s, int low, int high) {
+	title("QUICK SORT");
+	sample_sort_quick_recursive(s, low, high);
     sample_show(s, -1, -1, -1);
 } 
 /*---- MERGE SORT --------------------------*/
@@ -302,14 +372,18 @@ void merge(SAMPLES * s, int l, int m, int r) {
     }
 }
 
-void sample_sort_merge(SAMPLES * s, int l, int r) {
-    title("MERGE SORT");
+void sample_sort_merge_recursive(SAMPLES * s, int l, int r) {
     if (l < r) {
         int m = (l + r) >> 1; 
-        sample_sort_merge(s, l, m);
-        sample_sort_merge(s, m + 1, r);
+        sample_sort_merge_recursive(s, l, m);
+        sample_sort_merge_recursive(s, m + 1, r);
         merge(s, l, m, r);
     }
+}
+
+void sample_sort_merge(SAMPLES * s, int l, int r) {
+    title("MERGE SORT");
+    sample_sort_merge_recursive(s, l, r);
     sample_show(s, -1, -1, -1);
 } 
 /*---- COMB SORT ----------------------------*/

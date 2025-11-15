@@ -57,11 +57,11 @@ typedef	char SHADES[SAMPLE_SIZE][16];
 #	define	VRUNNING	0x00DC
 #	define	VEXTRA		'#'
 #else
-#	define	VBLOCK		0x2588
+#	define	VBLOCK		0x2589
 #	define	VSHADE		0x2591
-#	define	VBAR		0x002D
-#	define	VCURRENT	0x2580
-#	define	VRUNNING	0x2584
+#	define	VBAR		'='
+#	define	VCURRENT	0x25B2
+#	define	VRUNNING	0x25BC
 #	define	VEXTRA		'#'
 #endif
 
@@ -139,6 +139,9 @@ const SHADES SHADE_GRAYSCALE =
 static char		sortTitle[256] = {0};		/* for displaying sort algorithm title */
 static char		menuText[1600] = {0};		/* for setting up main menu */
 static SHADES	colors = {0};				/* for selecting shades for sample rendering */
+static char		menuTitle[1024];
+static char 	menuCommands[1600];
+static char 	menuFooter[64];
 
 void set_shades(const SHADES shade) { memcpy(colors, shade, sizeof(SHADES)); }
 
@@ -161,10 +164,6 @@ void app_init() {
 	cursor_hide();
 	srand(time(NULL));
 	set_shades(SHADE_RAINBOW);
-
-static char	menuTitle[1024];
-static char menuCommands[1600];
-static char menuFooter[64];
 	
 	sprintf(menuTitle, 
 			"%so----------------------o\n"
@@ -231,6 +230,46 @@ void app_menu() {
 	fputs(menuText, stdout);	
 }
 
+void app_menu_arrow(int selected) {
+	const char* items[] = {
+		"A. Interchange Sort",
+		"B. Bubble Sort",
+		"C. Cocktail Sort",
+		"D. Selection Sort",
+		"E. Insertion Sort",
+		"F. Shell Sort",
+		"G. Comb Sort",
+		"H. Merge Sort",
+		"I. Heap Sort",
+		"J. Counting Sort",
+		"K. Quick Sort",
+		"L. Radix Sort",
+		"",
+		"M. View Samples",
+		"N. Generate New",
+		"",
+		"O. Exit"
+	};
+	
+	printf("%s", menuTitle);
+	for (int i = 0; i < 17; i++) {
+		if (items[i][0] == '\0') {
+			printf("%s|                      %s|\n", VT_COLOR(8), VT_COLOR(8));
+		} else {
+			if (i == selected) {
+				printf("%s| %s%-20s %s|\n", VT_COLOR(8), VT_ATTR(7), items[i], VT_DEFAULTATTR);
+			} else {
+				printf("%s| %s%-20s %s|\n", VT_COLOR(8), VT_COLOR(153), items[i], VT_DEFAULTATTR);
+			}
+		}
+	}
+	printf("%so----------------------o\n", VT_COLOR(8));
+	printf("%sUse %s↑↓%s or %sA-O%s, press %sENTER%s to select\n",
+		   VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR,
+		   VT_ATTR(33), VT_DEFAULTATTR,
+		   VT_ATTR(33), VT_DEFAULTATTR);
+}
+
 void app_version() {
 	char buffer[256];
 	sprintf(buffer, 
@@ -255,16 +294,51 @@ void app_exec() {
 	SAMPLES	origin, sort;
 	int done = 0;
 	char choice;
+	int selected = 0;
+	int useArrows = 1;  /* Use arrow key navigation by default */
 	
 	sample_generate_random(&origin); 
 	
 	while (!done) {
 				
 		clear();
-		app_menu();
 		
-		fflush(stdin); scanf("%c", &choice);	
-		choice = toupper(choice & 0xFF);
+		if (useArrows) {
+			app_menu_arrow(selected);
+			
+			int ch = getch();
+			
+			/* Handle arrow keys (escape sequences) */
+			if (ch == 27 || ch == 224) {  /* ESC or extended key on Windows */
+				getch();  /* Skip '[' on Unix or get actual key on Windows */
+				ch = getch();
+				if (ch == 'A' || ch == 72) {  /* Up arrow */
+					do {
+						selected = (selected - 1 + 17) % 17;
+					} while (selected == 12 || selected == 15);  /* Skip empty lines */
+					continue;
+				} else if (ch == 'B' || ch == 80) {  /* Down arrow */
+					do {
+						selected = (selected + 1) % 17;
+					} while (selected == 12 || selected == 15);  /* Skip empty lines */
+					continue;
+				}
+			} else if (ch == '\n' || ch == '\r') {  /* Enter key */
+				/* Map selected index to choice letter */
+				const char mapping[] = "ABCDEFGHIJKL MN O";
+				choice = mapping[selected];
+			} else if (ch >= 'a' && ch <= 'z') {
+				choice = toupper(ch);
+			} else if (ch >= 'A' && ch <= 'Z') {
+				choice = ch;
+			} else {
+				continue;
+			}
+		} else {
+			app_menu();
+			fflush(stdin); scanf("%c", &choice);	
+			choice = toupper(choice & 0xFF);
+		}
 		
 		if (choice < 'A' && choice > 'M') continue;
 				
