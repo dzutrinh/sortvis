@@ -2,7 +2,7 @@
  *	SORTVIS.H
  *	---------
  *	Definitions for sort algorithms visualization
- *	Version 0.4.7
+ *	Version 0.5.0
  *	Coded by Trinh D.D. Nguyen
  *
  */
@@ -69,68 +69,112 @@ typedef	char SHADES[SAMPLE_SIZE][16];
 
 const SHADES SHADE_RAINBOW = 				/* rainbow colors for data bars */
 	{
-		VT_COLOR(200),		/* color 0 */
-		VT_COLOR(197),		/* color 1 */
-		VT_COLOR(160),		/* color 2 */
-		VT_COLOR(196),		/* color 3 */
-		VT_COLOR(208),		/* color 4 */
-		VT_COLOR(220),		/* color 5 */
-		VT_COLOR(226),		/* color 6 */
-		VT_COLOR(190),		/* color 7 */
-		VT_COLOR(154),		/* color 8 */
-		VT_COLOR(76) ,		/* color 9 */
-		VT_COLOR(48) ,		/* color 10 */
-		VT_COLOR(121),		/* color 11 */
-		VT_COLOR(87) ,		/* color 12 */
-		VT_COLOR(45) ,		/* color 13 */
-		VT_COLOR(33) ,		/* color 14 */
-		VT_COLOR(21) ,		/* color 15 */
-		VT_COLOR(129),		/* color 16 */
-		VT_COLOR(90) ,		/* color 17 */
+		VT_COLOR(196),		/* color 0:  Bright Red */
+		VT_COLOR(202),		/* color 1:  Red-Orange */
+		VT_COLOR(208),		/* color 2:  Orange */
+		VT_COLOR(214),		/* color 3:  Orange-Yellow */
+		VT_COLOR(220),		/* color 4:  Gold */
+		VT_COLOR(226),		/* color 5:  Yellow */
+		VT_COLOR(190),		/* color 6:  Yellow-Green */
+		VT_COLOR(154),		/* color 7:  Lime */
+		VT_COLOR(118),		/* color 8:  Green */
+		VT_COLOR(82) ,		/* color 9:  Spring Green */
+		VT_COLOR(48) ,		/* color 10: Mint */
+		VT_COLOR(51) ,		/* color 11: Cyan */
+		VT_COLOR(45) ,		/* color 12: Sky Blue */
+		VT_COLOR(39) ,		/* color 13: Blue */
+		VT_COLOR(33) ,		/* color 14: Deep Blue */
+		VT_COLOR(27) ,		/* color 15: Indigo */
+		VT_COLOR(57) ,		/* color 16: Violet */
+		VT_COLOR(93) ,		/* color 17: Purple */
 	};
 
-const SHADES SHADE_VAMPYRIC =
+const SHADES SHADE_PASTEL =
 	{
-		VT_COLOR(22), 		/* color 0 */
-		VT_COLOR(28),		/* color 1 */
-		VT_COLOR(34),		/* color 2 */
-		VT_COLOR(40),		/* color 3 */
-		VT_COLOR(76),		/* color 4 */
-		VT_COLOR(82),		/* color 5 */
-		VT_COLOR(112),		/* color 6 */
-		VT_COLOR(118),		/* color 7 */
-		VT_COLOR(154),		/* color 8 */
-		VT_COLOR(148),		/* color 9 */
-		VT_COLOR(184),		/* color 10 */
-		VT_COLOR(220),		/* color 11 */
-		VT_COLOR(178),		/* color 12 */
-		VT_COLOR(226),		/* color 13 */
-		VT_COLOR(227),		/* color 14 */
-		VT_COLOR(228),		/* color 15 */
-		VT_COLOR(229),		/* color 16 */
-		VT_COLOR(231),		/* color 17 */
+		VT_COLOR(51),  		/* color 0:  Cyan */
+		VT_COLOR(50),		/* color 1:  Bright Cyan */
+		VT_COLOR(49),		/* color 2:  Light Cyan */
+		VT_COLOR(48),		/* color 3:  Cyan-Green */
+		VT_COLOR(84),		/* color 4:  Aqua */
+		VT_COLOR(120),		/* color 5:  Light Aqua */
+		VT_COLOR(156),		/* color 6:  Cyan-Yellow */
+		VT_COLOR(192),		/* color 7:  Light Green-Yellow */
+		VT_COLOR(228),		/* color 8:  Pale Yellow */
+		VT_COLOR(227),		/* color 9:  Yellow */
+		VT_COLOR(226),		/* color 10: Bright Yellow */
+		VT_COLOR(220),		/* color 11: Gold */
+		VT_COLOR(214),		/* color 12: Peach */
+		VT_COLOR(211),		/* color 13: Light Pink */
+		VT_COLOR(218),		/* color 14: Pink */
+		VT_COLOR(212),		/* color 15: Rose Pink */
+		VT_COLOR(206),		/* color 16: Hot Pink */
+		VT_COLOR(200),		/* color 17: Magenta-Pink */
 	};
 
-const SHADES SHADE_GRAYSCALE =
+const SHADES SHADE_PLASMA =
 	{
-		VT_COLOR(235), 		/* color 0 */
-		VT_COLOR(236),		/* color 1 */
-		VT_COLOR(237),		/* color 2 */
-		VT_COLOR(238),		/* color 3 */
-		VT_COLOR(239),		/* color 4 */
-		VT_COLOR(240),		/* color 5 */
-		VT_COLOR(241),		/* color 6 */
-		VT_COLOR(242),		/* color 7 */
-		VT_COLOR(243),		/* color 8 */
-		VT_COLOR(244),		/* color 9 */
-		VT_COLOR(245),		/* color 10 */
-		VT_COLOR(246),		/* color 11 */
-		VT_COLOR(247),		/* color 12 */
-		VT_COLOR(248),		/* color 13 */
-		VT_COLOR(249),		/* color 14 */
-		VT_COLOR(250),		/* color 15 */
-		VT_COLOR(251),		/* color 16 */
-		VT_COLOR(252),		/* color 17 */
+		VT_COLOR(54),  		/* color 0:  Deep Purple */
+		VT_COLOR(55),		/* color 1:  Purple */
+		VT_COLOR(93),		/* color 2:  Violet */
+		VT_COLOR(92),		/* color 3:  Light Purple */
+		VT_COLOR(129),		/* color 4:  Magenta-Purple */
+		VT_COLOR(128),		/* color 5:  Magenta */
+		VT_COLOR(164),		/* color 6:  Pink-Magenta */
+		VT_COLOR(200),		/* color 7:  Hot Pink */
+		VT_COLOR(206),		/* color 8:  Bright Pink */
+		VT_COLOR(213),		/* color 9:  Rose */
+		VT_COLOR(219),		/* color 10: Light Pink */
+		VT_COLOR(224),		/* color 11: Peach */
+		VT_COLOR(223),		/* color 12: Light Peach */
+		VT_COLOR(216),		/* color 13: Salmon */
+		VT_COLOR(209),		/* color 14: Light Orange */
+		VT_COLOR(215),		/* color 15: Orange */
+		VT_COLOR(221),		/* color 16: Gold-Orange */
+		VT_COLOR(227),		/* color 17: Light Yellow */
+	};
+
+const SHADES SHADE_INFERNO =
+	{
+		VT_COLOR(16),  		/* color 0:  Black */
+		VT_COLOR(52),		/* color 1:  Dark Purple */
+		VT_COLOR(53),		/* color 2:  Purple */
+		VT_COLOR(54),		/* color 3:  Deep Purple */
+		VT_COLOR(90),		/* color 4:  Purple-Magenta */
+		VT_COLOR(91),		/* color 5:  Dark Magenta */
+		VT_COLOR(127),		/* color 6:  Magenta */
+		VT_COLOR(126),		/* color 7:  Magenta-Red */
+		VT_COLOR(160),		/* color 8:  Dark Red */
+		VT_COLOR(161),		/* color 9:  Red */
+		VT_COLOR(196),		/* color 10: Bright Red */
+		VT_COLOR(202),		/* color 11: Red-Orange */
+		VT_COLOR(208),		/* color 12: Orange */
+		VT_COLOR(214),		/* color 13: Orange-Gold */
+		VT_COLOR(220),		/* color 14: Gold */
+		VT_COLOR(226),		/* color 15: Yellow */
+		VT_COLOR(227),		/* color 16: Light Yellow */
+		VT_COLOR(228),		/* color 17: Pale Yellow */
+	};
+
+const SHADES SHADE_VIRIDIS =
+	{
+		VT_COLOR(53),  		/* color 0:  Deep Purple */
+		VT_COLOR(54),		/* color 1:  Dark Purple */
+		VT_COLOR(55),		/* color 2:  Purple */
+		VT_COLOR(56),		/* color 3:  Blue-Purple */
+		VT_COLOR(62),		/* color 4:  Dark Blue */
+		VT_COLOR(63),		/* color 5:  Blue */
+		VT_COLOR(26),		/* color 6:  Blue */
+		VT_COLOR(25),		/* color 7:  Deep Blue */
+		VT_COLOR(24),		/* color 8:  Dark Cyan */
+		VT_COLOR(30),		/* color 9:  Teal */
+		VT_COLOR(36),		/* color 10: Dark Green-Cyan */
+		VT_COLOR(35),		/* color 11: Green-Cyan */
+		VT_COLOR(34),		/* color 12: Green */
+		VT_COLOR(40),		/* color 13: Bright Green */
+		VT_COLOR(76),		/* color 14: Lime Green */
+		VT_COLOR(112),		/* color 15: Light Green */
+		VT_COLOR(148),		/* color 16: Yellow-Green */
+		VT_COLOR(184),		/* color 17: Light Yellow */
 	};
 
 #include "helpers.h"
@@ -194,9 +238,10 @@ void app_init() {
 			"%s| %sL%s. Radix Sort        %s|\n"
 			"%s+----------------------+\n"
 			"%s| %sM%s. View data         %s|\n"
-			"%s| %sN%s. Generate new data %s|\n"	
+			"%s| %sN%s. Generate new data %s|\n"
+			"%s| %sP%s. Select gradient   %s|\n"	
 			"%s+----------------------+\n"
-			"%s| %sO%s. Exit              %s|\n"
+			"%s| %sQ%s. Exit              %s|\n"
 			"%so----------------------o\n",
 			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
 			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
@@ -213,17 +258,87 @@ void app_init() {
 			VT_COLOR(8),
 			VT_COLOR(8), VT_COLOR(147), VT_DEFAULTATTR, VT_COLOR(8),
 			VT_COLOR(8), VT_COLOR(147), VT_DEFAULTATTR, VT_COLOR(8),
+			VT_COLOR(8), VT_COLOR(147), VT_DEFAULTATTR, VT_COLOR(8),
 			VT_COLOR(8),
 			VT_COLOR(8), VT_COLOR(228),  VT_DEFAULTATTR, VT_COLOR(8), 
 			VT_COLOR(8));
 	
 	sprintf(menuFooter, 
-			"%sChoice (%sA%s-%sO%s): ",
+			"%sChoice (%sA%s-%sQ%s): ",
 			VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR);
 
 	strcpy(menuText, menuTitle);
 	strcat(menuText, menuCommands);
 	strcat(menuText, menuFooter);
+}
+
+bool select_gradient() {
+	char choice;
+	int selected = 0;
+	const char* items[] = {
+		"A. Rainbow",
+		"B. Pastel",
+		"C. Plasma",
+		"D. Inferno",
+		"E. Viridis",
+		"",
+		"F. Back"
+	};
+	
+	while (1) {
+		clear();
+		printf(VT_COLOR(220)"SELECT COLOR GRADIENT\n");
+		printf(VT_RESET"--------------------\n");
+		
+		for (int i = 0; i < 7; i++) {
+			if (items[i][0] == '\0') {
+				printf(VT_RESET"--------------------\n");
+			} else {
+				if (i == selected) {
+					printf(VT_ATTR(7)"%-20s"VT_DEFAULTATTR"\n", items[i]);
+				} else {
+					printf(VT_COLOR(150)"%c"VT_RESET"%s\n", items[i][0], items[i] + 1);
+				}
+			}
+		}
+		
+		printf(VT_RESET"\nUse "VT_ATTR(33)"\u2191\u2193"VT_DEFAULTATTR" or "VT_ATTR(33)"A-F"VT_DEFAULTATTR", press "VT_ATTR(33)"ENTER"VT_DEFAULTATTR" to select\n");
+		fflush(stdout);
+		
+		int ch = getch();
+		
+		/* Handle arrow keys */
+		if (ch == 27 || ch == 224) {
+			getch();
+			ch = getch();
+			if (ch == 'A' || ch == 72) {  /* Up arrow */
+				do {
+					selected = (selected - 1 + 7) % 7;
+				} while (selected == 5);  /* Skip separator */
+				continue;
+			} else if (ch == 'B' || ch == 80) {  /* Down arrow */
+				do {
+					selected = (selected + 1) % 7;
+				} while (selected == 5);  /* Skip separator */
+				continue;
+			}
+		} else if (ch == '\n' || ch == '\r') {  /* Enter */
+			const char mapping[] = "ABCDEF";
+			choice = (selected == 6) ? 'F' : mapping[selected];
+		} else {
+			choice = toupper(ch & 0xFF);
+		}
+		
+		switch (choice) {
+		case 'A': set_shades(SHADE_RAINBOW); return true;
+		case 'B': set_shades(SHADE_PASTEL); return true;
+		case 'C': set_shades(SHADE_PLASMA); return true;
+		case 'D': set_shades(SHADE_INFERNO); return true;
+		case 'E': set_shades(SHADE_VIRIDIS); return true;
+		case 'F': return false;
+		default: continue;
+		}
+	}
 }
 
 void app_menu() {
@@ -247,12 +362,13 @@ void app_menu_arrow(int selected) {
 		"",
 		"M. View Samples",
 		"N. Generate New",
+		"P. Select Gradient",
 		"",
-		"O. Exit"
+		"Q. Exit"
 	};
 	
 	printf("%s", menuTitle);
-	for (int i = 0; i < 17; i++) {
+	for (int i = 0; i < 18; i++) {
 		if (items[i][0] == '\0') {
 			printf("%s|                      %s|\n", VT_COLOR(8), VT_COLOR(8));
 		} else {
@@ -264,7 +380,7 @@ void app_menu_arrow(int selected) {
 		}
 	}
 	printf("%so----------------------o\n", VT_COLOR(8));
-	printf("%sUse %s↑↓%s or %sA-O%s, press %sENTER%s to select\n",
+	printf("%sUse %s↑↓%s or %sA-Q%s, press %sENTER%s to select\n",
 		   VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR,
 		   VT_ATTR(33), VT_DEFAULTATTR,
 		   VT_ATTR(33), VT_DEFAULTATTR);
@@ -314,18 +430,18 @@ void app_exec() {
 				ch = getch();
 				if (ch == 'A' || ch == 72) {  /* Up arrow */
 					do {
-						selected = (selected - 1 + 17) % 17;
-					} while (selected == 12 || selected == 15);  /* Skip empty lines */
+						selected = (selected - 1 + 18) % 18;
+					} while (selected == 12 || selected == 16);  /* Skip empty lines */
 					continue;
 				} else if (ch == 'B' || ch == 80) {  /* Down arrow */
 					do {
-						selected = (selected + 1) % 17;
-					} while (selected == 12 || selected == 15);  /* Skip empty lines */
+						selected = (selected + 1) % 18;
+					} while (selected == 12 || selected == 16);  /* Skip empty lines */
 					continue;
 				}
 			} else if (ch == '\n' || ch == '\r') {  /* Enter key */
 				/* Map selected index to choice letter */
-				const char mapping[] = "ABCDEFGHIJKL MN O";
+				const char mapping[] = "ABCDEFGHIJKL MNP Q";
 				choice = mapping[selected];
 			} else if (ch >= 'a' && ch <= 'z') {
 				choice = toupper(ch);
@@ -369,10 +485,20 @@ void app_exec() {
 					}		
 				   	break;
 		
+		case 'P' : 	if (select_gradient()) {
+						title("GRADIENT CHANGED"); 
+			       		sample_show(&origin, -1, -1, -1);
+					}
+					else {
+						title("CURRENT SAMPLES"); 
+			       		sample_show(&origin, -1, -1, -1);
+					}
+				   	break;
+		
 		case 'X' :
-		case 'O' : 	done = 1; break;
+		case 'Q' : 	done = 1; break;
 		}
-		if (choice >= 'A' && choice <= 'N') waitkey();
+		if (choice >= 'A' && choice <= 'P') waitkey();
 	}
 }
 

@@ -36,6 +36,7 @@
  *  - Menu navigation via arrow keys added.
  *  - Test suite added as separate program "test.c"
  *  - Other minor fixes and improvements.
+ *  - Gradient color schemes added.
  */
 
 #include "sortvis.h"
