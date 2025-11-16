@@ -11,6 +11,6 @@ Please see [sortvis.c](sortvis.c)
 
 ## Notes
 This project was compiled and succesfully tested on
-* macOS Tohoe
+* macOS Tahoe
 
 Not compatible with Windows 7.
