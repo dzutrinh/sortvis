@@ -329,10 +329,10 @@ void test_all_same_values() {
 /*---- MAIN TEST RUNNER ------------------------*/
 int main(int argc, char **argv) {
 	printf("\n");
-	printf("╔════════════════════════════════════════════════════╗\n");
-	printf("║  SORTVIS - Sorting Algorithms Test Suite           ║\n");
-	printf("║  Testing all 12 sorting algorithms                 ║\n");
-	printf("╚════════════════════════════════════════════════════╝\n");
+	printf("+----------------------------------------------------+\n");
+	printf("|  SORTVIS - Sorting Algorithms Test Suite           |\n");
+	printf("|  Testing all 12 sorting algorithms                 |\n");
+	printf("+----------------------------------------------------+\n");
 	
 	srand(time(NULL));
 	
@@ -349,20 +349,20 @@ int main(int argc, char **argv) {
 	
 	/* Print summary */
 	printf("\n");
-	printf("╔════════════════════════════════════════════════════╗\n");
-	printf("║  TEST SUMMARY                                      ║\n");
-	printf("╠════════════════════════════════════════════════════╣\n");
-	printf("║  Total Tests:  %-4d                                ║\n", stats.total_tests);
+	printf("+----------------------------------------------------+\n");
+	printf("|  TEST SUMMARY                                      |\n");
+	printf("+----------------------------------------------------+\n");
+	printf("|  Total Tests:  %-4d                                |\n", stats.total_tests);
 	
 	if (stats.failed_tests == 0) {
-		printf("║  Passed:       \x1B[32m%-4d ✓\x1B[0m                              ║\n", stats.passed_tests);
-		printf("║  Failed:       \x1B[32m%-4d\x1B[0m                                ║\n", stats.failed_tests);
+		printf("|  Passed:       \x1B[32m%-4d ✓\x1B[0m                              |\n", stats.passed_tests);
+		printf("|  Failed:       \x1B[32m%-4d\x1B[0m                                |\n", stats.failed_tests);
 	} else {
-		printf("║  Passed:       %-4d                                ║\n", stats.passed_tests);
-		printf("║  Failed:       \x1B[31m%-4d ✗\x1B[0m                              ║\n", stats.failed_tests);
+		printf("|  Passed:       %-4d                                |}\n", stats.passed_tests);
+		printf("|  Failed:       \x1B[31m%-4d ✗\x1B[0m                              |\n", stats.failed_tests);
 	}
 	
-	printf("╚════════════════════════════════════════════════════╝\n");
+	printf("+----------------------------------------------------+\n");
 	
 	if (stats.failed_tests == 0) {
 		printf("\n\x1B[32m🎉 All tests passed successfully!\x1B[0m\n\n");
