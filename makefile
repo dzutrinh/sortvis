@@ -3,16 +3,16 @@ CFLAGS=-O2 -Wall
 LFLAGS=
 
 ifeq ($(OS),Windows_NT)
-	BIN=sortvis-win32.exe
+	BIN=sortvis.exe
 	RM=del
 	LFLAGS+=-s
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
-		BIN=sortvis-linux
+		BIN=sortvis
 	endif
 	ifeq ($(UNAME_S),Darwin)
-		BIN=sortvis-darwin
+		BIN=sortvis
 	endif
 	RM=rm -f
 endif
