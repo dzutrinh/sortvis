@@ -39,11 +39,26 @@
 #define	BOARD_WIDTH		(SAMPLE_SIZE << 2)
 int SAMPLE_SPEED = 60;		/* animation speed (in milliseconds) */
 
-typedef enum {false, true} bool;
+#ifndef bool
+#define bool	int
+#define true	1
+#define false	0
+#endif
+
+/* Animation enhancement flags */
+bool SHOW_STATISTICS = true;		/* display comparison/swap counters */
+bool HIGHLIGHT_SWAPS = true;		/* flash swapped elements */
+bool SHOW_SORTED_REGION = true;		/* highlight sorted portions */
+bool SMOOTH_TRANSITIONS = true;		/* animate element movements with intermediate frames */
+int TRANSITION_FRAMES = 3;			/* number of intermediate frames for smooth transitions */
+bool PROGRESSIVE_COLORS = false;	/* use color gradients based on comparison intensity (disabled) */
 
 typedef struct samples {
 	int data[SAMPLE_SIZE];
 	int max;
+	long comparisons;		/* number of comparisons made */
+	long swaps;				/* number of swaps made */
+	int sorted_until;		/* index where array is sorted (for optimization tracking) */
 } SAMPLES;
 
 typedef	char SHADES[SAMPLE_SIZE][16];

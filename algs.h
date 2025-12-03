@@ -4,11 +4,36 @@
 /*---- GLOBAL FLAGS --------------------------------*/
 bool ENABLE_VISUALIZATION = true;	/* set to false to disable visualization output */
 
+/*---- FORWARD DECLARATIONS ------------------------*/
+void sample_show(SAMPLES * s, int u, int v, int t);
+
 /*---- SORT SAMPLES HANDLERS ---------------------*/
 void sample_swap(SAMPLES * s, int a, int b) {
 	int t = s->data[a];
 	s->data[a] = s->data[b];
 	s->data[b] = t;
+	s->swaps++;	/* track swap count */
+}
+
+void sample_swap_animated(SAMPLES * s, int a, int b, int u, int v, int t) {
+	/* Animated swap with smooth transition */
+	if (!SMOOTH_TRANSITIONS || !ENABLE_VISUALIZATION) {
+		sample_swap(s, a, b);
+		return;
+	}
+	
+	/* Show highlighting before swap */
+	for (int frame = 0; frame < TRANSITION_FRAMES; frame++) {
+		sample_show(s, a, b, t);
+		mssleep(SAMPLE_SPEED / (TRANSITION_FRAMES + 1));
+	}
+	
+	/* Perform actual swap */
+	sample_swap(s, a, b);
+	
+	/* Show result with flash effect */
+	sample_show(s, a, b, t);
+	mssleep(SAMPLE_SPEED / (TRANSITION_FRAMES + 1));
 }
 
 int sample_height(SAMPLES * s, int i) {
@@ -19,12 +44,18 @@ void sample_generate_ascending(SAMPLES * s) {
 	int i;
 	for (i = 0; i < SAMPLE_SIZE; i++) s->data[i] = i+1;
 	s->max = i;
+	s->comparisons = 0;
+	s->swaps = 0;
+	s->sorted_until = -1;
 }
 
 void sample_generate_descending(SAMPLES * s) {
 	int i;
 	for (i = 0; i < SAMPLE_SIZE; i++) s->data[i] = SAMPLE_SIZE-i;
 	s->max = i;
+	s->comparisons = 0;
+	s->swaps = 0;
+	s->sorted_until = -1;
 }
 
 void sample_generate_random(SAMPLES * s) {
@@ -32,6 +63,10 @@ void sample_generate_random(SAMPLES * s) {
 	sample_generate_ascending(s);
 	for (i = 0; i < SAMPLE_SIZE; i++)	/* shuffling */
 		sample_swap(s, rand() % SAMPLE_SIZE, rand() % SAMPLE_SIZE);
+	/* Reset stats after shuffle */
+	s->comparisons = 0;
+	s->swaps = 0;
+	s->sorted_until = -1;
 }
 
 void sample_validate(SAMPLES * s) {
@@ -115,8 +150,9 @@ bool sample_is_sorted(SAMPLES * s) {
 
 void sample_show(SAMPLES * s, int u, int v, int t){
 	int i, j, c;
-	char temp[1024], buffer[64], sep[BOARD_WIDTH+1];
-	static char screen[8192];  /* Large buffer for entire screen */
+	char temp[1024], buffer[128], sep[BOARD_WIDTH+1];
+	static char screen[16384];  /* Large buffer for entire screen */
+	static int last_u = -1, last_v = -1;  /* Track last swap for highlighting */
 	
 	/* skip visualization if disabled */
 	if (!ENABLE_VISUALIZATION) return;
@@ -141,7 +177,7 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 	for (j = 0; j < s->max; j++) {
 		temp[0] = 0;
 		for (i = 0; i < SAMPLE_SIZE; i++) {
-			c = (j < sample_height(s, i)) ? VSHADE : VBLOCK;		
+			c = (j < sample_height(s, i)) ? VSHADE : VBLOCK;
 			sprintf(buffer, " %s%lc%lc ", colors[s->data[i]-1], (wint_t) c, (wint_t) c);
 			strcat(temp, buffer);
 		}
@@ -153,17 +189,32 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 	sprintf(temp, "%s%s\n", VT_COLOR(8), sep);
 	strcat(screen, temp);
 	
-	/* Add sort values to buffer */
+	/* Add sort values to buffer with enhanced highlighting */
 	temp[0] = 0;
 	for (i = 0; i < SAMPLE_SIZE; i++) {
-		if (i == u || i == v)
-			sprintf(buffer, "%s%3d ", VT_COLOR(231), s->data[i]);
-		else
-			sprintf(buffer, "%s%3d ", VT_COLOR(244), s->data[i]);			
+		if (i == u || i == v) {
+			/* Current comparison - bright yellow */
+			sprintf(buffer, "%s%s%3d%s ", VT_ATTR(1), VT_COLOR(226), s->data[i], VT_DEFAULTATTR);
+		} else if (SHOW_SORTED_REGION && s->sorted_until >= 0 && i <= s->sorted_until) {
+			/* Sorted region - green */
+			sprintf(buffer, "%s%3d%s ", VT_COLOR(46), s->data[i], VT_DEFAULTATTR);
+		} else if (HIGHLIGHT_SWAPS && (i == last_u || i == last_v)) {
+			/* Just swapped - cyan */
+			sprintf(buffer, "%s%3d%s ", VT_COLOR(51), s->data[i], VT_DEFAULTATTR);
+		} else {
+			/* Normal - gray */
+			sprintf(buffer, "%s%3d ", VT_COLOR(244), s->data[i]);
+		}
 		strcat(temp, buffer);
 	}
 	strcat(temp, "\n");
 	strcat(screen, temp);
+	
+	/* Update last swap positions */
+	if (u != last_u || v != last_v) {
+		last_u = u;
+		last_v = v;
+	}
 
 	/* Add current indices to buffer */
 	strcpy(temp, VT_COLOR(231));
@@ -178,6 +229,18 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 	strcat(temp, "\n");
 	strcat(screen, temp);
 	
+	/* Add statistics bar if enabled */
+	if (SHOW_STATISTICS) {
+		sprintf(temp, "%s%s", VT_COLOR(8), sep);
+		strcat(screen, "\n");
+		strcat(screen, temp);
+		sprintf(temp, "\n%sComparisons: %s%-8ld%s  Swaps: %s%-8ld%s  Speed: %dms\n",
+				VT_COLOR(244), VT_COLOR(39), s->comparisons, 
+				VT_COLOR(244), VT_COLOR(196), s->swaps,
+				VT_COLOR(244), SAMPLE_SPEED);
+		strcat(screen, temp);
+	}
+	
 	/* Write entire screen at once (atomic operation) */
 	fputs(screen, stdout);
 	fflush(stdout);
@@ -189,14 +252,24 @@ void sample_sort_interchange(SAMPLES * s) {
 	int i, j;
     title("INTERCHANGE SORT");
 	for (i = 0; i < SAMPLE_SIZE-1; i++) {
+		s->sorted_until = i - 1;  /* Track sorted region */
 		for (j = i + 1; j < SAMPLE_SIZE; j++) {
+			s->comparisons++;
 			if (s->data[i] > s->data[j]) {
-				sample_swap(s, i, j);
+				if (SMOOTH_TRANSITIONS) {
+					sample_swap_animated(s, i, j, i, j, -1);
+				} else {
+					sample_swap(s, i, j);
+					sample_show(s, i, j, -1);
+					mssleep(SAMPLE_SPEED);
+				}
+			} else {
+				sample_show(s, i, j, -1);
+				mssleep(SAMPLE_SPEED);
 			}
-			sample_show(s, i, j, -1);
-			mssleep(SAMPLE_SPEED);
 		}
 	}
+	s->sorted_until = SAMPLE_SIZE - 1;
 	sample_show(s, -1, -1, -1);
 }
 /*---- SELECTION SORT ----------------------*/
@@ -204,17 +277,25 @@ void sample_sort_selection(SAMPLES * s) {
 	int i, j, minidx;
     title("SELECTION SORT");
 	for (i = 0; i < SAMPLE_SIZE-1; i++) {
+		s->sorted_until = i - 1;  /* Elements before i are sorted */
 		minidx = i;
 		for (j = i + 1; j < SAMPLE_SIZE; j++) {
+			s->comparisons++;
 			if (s->data[j] < s->data[minidx])
 				minidx = j;
 			sample_show(s, i, j, minidx);
 			mssleep(SAMPLE_SPEED);
 		}
-		if (minidx != i)
-			sample_swap(s, i, minidx);
+		if (minidx != i) {
+			if (SMOOTH_TRANSITIONS) {
+				sample_swap_animated(s, i, minidx, i, j, minidx);
+			} else {
+				sample_swap(s, i, minidx);
+			}
+		}
 		sample_show(s, i, j, minidx);
 	}
+	s->sorted_until = SAMPLE_SIZE - 1;
 	sample_show(s, -1, -1, -1);
 }
 /*---- BUBBLE SORT -------------------------*/
@@ -224,16 +305,26 @@ void sample_sort_bubble(SAMPLES * s) {
     title("BUBBLE SORT");
 	for (i = 0; i < SAMPLE_SIZE-1; i++) {
 		swapped = false;
+		s->sorted_until = SAMPLE_SIZE - i - 1;  /* Elements after this are sorted */
 		for (j = 0; j < SAMPLE_SIZE-i-1; j++) {
+			s->comparisons++;
 			if (s->data[j] > s->data[j+1]) {
-				sample_swap(s, j, j+1);
+				if (SMOOTH_TRANSITIONS) {
+					sample_swap_animated(s, j, j+1, j, j+1, -1);
+				} else {
+					sample_swap(s, j, j+1);
+					sample_show(s, j, j+1, -1);
+					mssleep(SAMPLE_SPEED);
+				}
 				swapped = true;
+			} else {
+				sample_show(s, j, j+1, -1);
+				mssleep(SAMPLE_SPEED);
 			}
-			sample_show(s, j, j+1, -1);
-			mssleep(SAMPLE_SPEED);
 		}
 		if (!swapped) break;
 	}
+	s->sorted_until = SAMPLE_SIZE - 1;
 	sample_show(s, -1, -1, -1);
 }
 /*---- INSERTION SORT ----------------------*/
@@ -241,18 +332,23 @@ void sample_sort_insertion(SAMPLES * s) {
 	int i, j, key;
     title("INSERTION SORT");
 	for (i = 1; i < SAMPLE_SIZE; i++) {
+		s->sorted_until = i - 1;  /* Elements 0 to i-1 are sorted */
 		key = s->data[i];
 		j = i-1;
 		while (j >= 0 && s->data[j] > key) {
+			s->comparisons++;
+			s->swaps++;  /* Shifting is essentially a swap */
 			s->data[j+1] = s->data[j];
 			j--;
 			sample_show(s, j, j+1, -1);
 			mssleep(SAMPLE_SPEED);
 		}
+		if (j >= 0) s->comparisons++;  /* Count final comparison */
 		s->data[j+1] = key;
 		sample_show(s, i, j+1, -1);
 		mssleep(SAMPLE_SPEED);
 	}
+	s->sorted_until = SAMPLE_SIZE - 1;
 	sample_show(s, -1, -1, -1);
 }
 /*---- SHELL SORT --------------------------*/
@@ -265,10 +361,13 @@ void sample_sort_shell(SAMPLES * s) {
             temp = s->data[i];
             int j;
             for (j = i; j >= gap && s->data[j - gap] > temp; j -= gap) {
+                s->comparisons++;
+                s->swaps++;
                 s->data[j] = s->data[j - gap];
 				sample_show(s, j, j-gap, -1);
 				mssleep(SAMPLE_SPEED);
 			}
+            if (j >= gap) s->comparisons++;  /* Count final comparison */
             s->data[j] = temp;
 			sample_show(s, i, j, -1);
 			mssleep(SAMPLE_SPEED);
@@ -282,8 +381,14 @@ void heapify(SAMPLES * s, int n, int i) {
     int left = 2 * i + 1;
     int right = 2 * i + 2;
 
-    if (left < n && s->data[left] > s->data[largest])   largest = left;
-    if (right < n && s->data[right] > s->data[largest]) largest = right;
+    if (left < n) {
+        s->comparisons++;
+        if (s->data[left] > s->data[largest]) largest = left;
+    }
+    if (right < n) {
+        s->comparisons++;
+        if (s->data[right] > s->data[largest]) largest = right;
+    }
 
     if (largest != i) {
         sample_swap(s, i, largest);
@@ -311,8 +416,14 @@ int partition(SAMPLES * s, int low, int high)
 {
     int i = low, j = high, pivot = s->data[low];
     while (i < j) {
-        while (i < high && pivot >= s->data[i]) i++;
-        while (j > low && pivot < s->data[j]) j--;
+        while (i < high && pivot >= s->data[i]) {
+            s->comparisons++;
+            i++;
+        }
+        while (j > low && pivot < s->data[j]) {
+            s->comparisons++;
+            j--;
+        }
         if (i < j) {
 			sample_swap(s, i, j);
     	}
@@ -350,6 +461,7 @@ void merge(SAMPLES * s, int l, int m, int r) {
 
     i = 0; j = 0; k = l;
     while (i < n1 && j < n2) {
+        s->comparisons++;
         if (L[i] <= R[j]) {
             s->data[k] = L[i];
             i++;
@@ -358,12 +470,14 @@ void merge(SAMPLES * s, int l, int m, int r) {
             s->data[k] = R[j];
             j++;
         }
+        s->swaps++;
         k++;
 	    sample_show(s, l, r, m);
         mssleep(SAMPLE_SPEED);
     }
     while (i < n1) {  
         s->data[k] = L[i];
+        s->swaps++;
         i++;
         k++;
 	    sample_show(s, l, r, m);
@@ -371,6 +485,7 @@ void merge(SAMPLES * s, int l, int m, int r) {
     }
     while (j < n2) {  
         s->data[k] = R[j];
+        s->swaps++;
         j++;
         k++;
 	    sample_show(s, l, r, m);
@@ -402,6 +517,7 @@ void sample_sort_comb(SAMPLES * s)  {
     	if (gap < 1) gap = 1; 
         swapped = false; 
         for (i = 0; i < SAMPLE_SIZE - gap; i++)  { 
+            s->comparisons++;
             if (s->data[i] > s->data[i+gap]) { 
                 sample_swap(s, i, i+gap); 
                 swapped = true;
@@ -421,6 +537,7 @@ void sample_sort_count(SAMPLES * s) {
 	for (i = 0; i <= SAMPLE_SIZE; i++) count[i] = 0;
     for (i = 0; i < SAMPLE_SIZE; ++i) {
 		++count[s->data[i]];
+		s->comparisons++;  /* Counting operation */
 		sample_show(s, i, -1, -1);
     	mssleep(SAMPLE_SPEED);
 	}
@@ -429,12 +546,14 @@ void sample_sort_count(SAMPLES * s) {
     for (i = 0; i < SAMPLE_SIZE; ++i) {
         output[count[s->data[i]] - 1] = s->data[i];
         --count[s->data[i]];
+        s->swaps++;  /* Placement operation */
 		sample_show(s, -1, i, -1);
     	mssleep(SAMPLE_SPEED);
 
     }
     for (i = 0; i < SAMPLE_SIZE; ++i) {    	
 		s->data[i] = output[i];
+		s->swaps++;
 		sample_show(s, i, -1, -1);
     	mssleep(SAMPLE_SPEED);
 	}
@@ -447,6 +566,7 @@ void sample_sort_cocktail(SAMPLES * s) {
     while (swapped) {
         swapped = 0;
         for (i = start; i < end; i++) {
+            s->comparisons++;
             if (s->data[i] > s->data[i + 1]) {
                 sample_swap(s, i, i + 1);
                 swapped = 1;
@@ -460,6 +580,7 @@ void sample_sort_cocktail(SAMPLES * s) {
         --end;
  
         for (i = end - 1; i >= start; i--) {
+            s->comparisons++;
             if (s->data[i] > s->data[i + 1]) {
                 sample_swap(s, i, i + 1);
                 swapped = 1;
@@ -480,6 +601,7 @@ void count_sort_radix(SAMPLES * s, int exp) {
 	for (int i = 0; i < SAMPLE_SIZE; i++) {
 		output.data[i] = 1;
 		count[(s->data[i] / exp) % 10]++;
+		s->comparisons++;  /* Classification operation */
 	}
 
 	for (int i = 1; i < 10; i++)
@@ -488,12 +610,14 @@ void count_sort_radix(SAMPLES * s, int exp) {
 	for (int i = SAMPLE_SIZE - 1; i >= 0; i--) {
 		output.data[count[(s->data[i] / exp) % 10] - 1] = s->data[i];
 		count[(s->data[i] / exp) % 10]--;
+		s->swaps++;  /* Placement operation */
 		sample_show(s, i, -1, -1);
     	mssleep(SAMPLE_SPEED);
 	}
 
 	for (int i = 0; i < SAMPLE_SIZE; i++) {
 		s->data[i] = output.data[i];
+		s->swaps++;
 		sample_show(s, i, -1, -1);
     	mssleep(SAMPLE_SPEED);
 	}
