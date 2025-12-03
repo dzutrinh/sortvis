@@ -15,17 +15,18 @@
  *	
  *	Tested on the following platforms:
  *	- macOS Tahoe, LLVM Clang 17
+ *	- Windows 10/11 with MinGW
  *
  *	Notes:
- *	- Windows 7 or ealier are not supported.
- *	- Haven't test under Windows 8.1
+ *	- Windows 10 Build 10586 or later required for VT support
+ *	- Windows 7/8/8.1 are not supported
  *
  *	Updates:
  *	- Added Cocktail Sort, Comb Sort, Counting Sort, Shell Sort, Radix Sort
  *	- Fixed several compile time warnings
  * 	- Flickering fixed
  *	- Enabled VT Terminal on Windows (requires Windows 10 or later)
- *	- Now supports colorul texts on Windows CMD
+ *	- Now supports colorful texts on Windows CMD
  *	- Code clean-up
  *	- Animation speed fixed to make it easier to catch up
  *	- Some minor updates
@@ -37,6 +38,10 @@
  *  - Test suite added as separate program "test.c"
  *  - Other minor fixes and improvements.
  *  - Gradient color schemes added.
+ *  - Enhanced --help parameter with detailed information
+ *  - Improved error handling for command-line arguments
+ *  - Fixed Win32 arrow key detection compatibility
+ *  - Added robust terminal initialization with error messages
  */
 
 #include "sortvis.h"

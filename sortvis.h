@@ -202,8 +202,13 @@ void title(const char * name) {
 
 void app_init() {
 
-	if (!vt_start())
-		die(-1, "Cannot enable virtual terminal.\n");
+	if (!vt_start()) {
+		fprintf(stderr, "\nFailed to initialize terminal support.\n");
+		fprintf(stderr, "SortVis requires:\n");
+		fprintf(stderr, "  - Windows 10 (Build 10586) or later, OR\n");
+		fprintf(stderr, "  - macOS/Linux with ANSI terminal support\n\n");
+		exit(-1);
+	}
 
 	cursor_hide();
 	srand(time(NULL));
@@ -302,26 +307,22 @@ bool select_gradient() {
 			}
 		}
 		
-		printf(VT_RESET"\nUse "VT_ATTR(33)"\u2191\u2193"VT_DEFAULTATTR" or "VT_ATTR(33)"A-F"VT_DEFAULTATTR", press "VT_ATTR(33)"ENTER"VT_DEFAULTATTR" to select\n");
+		printf(VT_RESET"\nUse "VT_ATTR(33)"UP/DOWN"VT_DEFAULTATTR" arrows or "VT_ATTR(33)"A-F"VT_DEFAULTATTR", press "VT_ATTR(33)"ENTER"VT_DEFAULTATTR" to select\n");
 		fflush(stdout);
 		
-		int ch = getch();
+		int ch = getch_arrow();
 		
 		/* Handle arrow keys */
-		if (ch == 27 || ch == 224) {
-			getch();
-			ch = getch();
-			if (ch == 'A' || ch == 72) {  /* Up arrow */
-				do {
-					selected = (selected - 1 + 7) % 7;
-				} while (selected == 5);  /* Skip separator */
-				continue;
-			} else if (ch == 'B' || ch == 80) {  /* Down arrow */
-				do {
-					selected = (selected + 1) % 7;
-				} while (selected == 5);  /* Skip separator */
-				continue;
-			}
+		if (ch == 'U') {  /* Up arrow */
+			do {
+				selected = (selected - 1 + 7) % 7;
+			} while (selected == 5);  /* Skip separator */
+			continue;
+		} else if (ch == 'D') {  /* Down arrow */
+			do {
+				selected = (selected + 1) % 7;
+			} while (selected == 5);  /* Skip separator */
+			continue;
 		} else if (ch == '\n' || ch == '\r') {  /* Enter */
 			const char mapping[] = "ABCDEF";
 			choice = (selected == 6) ? 'F' : mapping[selected];
@@ -380,7 +381,7 @@ void app_menu_arrow(int selected) {
 		}
 	}
 	printf("%so----------------------o\n", VT_COLOR(8));
-	printf("%sUse %s↑↓%s or %sA-Q%s, press %sENTER%s to select\n",
+	printf("%sUse %sUP/DOWN%s arrows or %sA-Q%s, press %sENTER%s to select\n",
 		   VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR,
 		   VT_ATTR(33), VT_DEFAULTATTR,
 		   VT_ATTR(33), VT_DEFAULTATTR);
@@ -392,18 +393,37 @@ void app_version() {
 			"--------------------------\n"
 		    "SortVis %d.%d.%d (%s)\n%s\n"
 			"--------------------------\n",
-		    (APP_VERSION & 0xFF), (APP_VERSION >> 8) & 0xFF, 
+		    (APP_VERSION >> 8) & 0xFF, (APP_VERSION & 0xFF), 
 		    APP_BUILD, APP_PLATFORM,
 			"Coded by Trinh D.D. Nguyen");
 	die(0, buffer);
 }
 
 void app_help() {
-	die(0, 	"usage: sortvis [--version|-v] [--help|-h] [--speed|-s n]\n\n"
-			"whereas:\n"
-			"\t--version|-v\tdisplay program version information\n"
-			"\t--help|-h\tdisplay this message\n"
-			"\t--speed|-s\tspecify animation speed\n\n");
+	printf("SortVis - Sort Algorithm Visualizations\n");
+	printf("========================================\n\n");
+	printf("USAGE:\n");
+	printf("  sortvis [OPTIONS]\n\n");
+	printf("OPTIONS:\n");
+	printf("  -v, --version        Display program version information\n");
+	printf("  -h, --help           Display this help message\n");
+	printf("  -s, --speed <value>  Set animation speed in milliseconds (default: 60)\n");
+	printf("                       Lower values = faster animation\n");
+	printf("                       Recommended range: 10-200\n\n");
+	printf("EXAMPLES:\n");
+	printf("  sortvis              Run with default settings\n");
+	printf("  sortvis -s 100       Run with slower animation (100ms delay)\n");
+	printf("  sortvis --speed 30   Run with faster animation (30ms delay)\n\n");
+	printf("SUPPORTED ALGORITHMS:\n");
+	printf("  Interchange, Bubble, Cocktail, Selection, Insertion, Shell,\n");
+	printf("  Comb, Merge, Heap, Counting, Quick, Radix\n\n");
+	printf("NAVIGATION:\n");
+	printf("  Use UP/DOWN arrow keys or letter keys (A-Q) to navigate menus\n");
+	printf("  Press ENTER to select an option\n\n");
+	printf("REQUIREMENTS:\n");
+	printf("  Windows 10 or later (for color support)\n");
+	printf("  macOS or Linux with ANSI terminal support\n\n");
+	exit(0);
 }
 
 void app_exec() {
@@ -422,23 +442,19 @@ void app_exec() {
 		if (useArrows) {
 			app_menu_arrow(selected);
 			
-			int ch = getch();
+			int ch = getch_arrow();
 			
-			/* Handle arrow keys (escape sequences) */
-			if (ch == 27 || ch == 224) {  /* ESC or extended key on Windows */
-				getch();  /* Skip '[' on Unix or get actual key on Windows */
-				ch = getch();
-				if (ch == 'A' || ch == 72) {  /* Up arrow */
-					do {
-						selected = (selected - 1 + 18) % 18;
-					} while (selected == 12 || selected == 16);  /* Skip empty lines */
-					continue;
-				} else if (ch == 'B' || ch == 80) {  /* Down arrow */
-					do {
-						selected = (selected + 1) % 18;
-					} while (selected == 12 || selected == 16);  /* Skip empty lines */
-					continue;
-				}
+			/* Handle arrow keys */
+			if (ch == 'U') {  /* Up arrow */
+				do {
+					selected = (selected - 1 + 18) % 18;
+				} while (selected == 12 || selected == 16);  /* Skip empty lines */
+				continue;
+			} else if (ch == 'D') {  /* Down arrow */
+				do {
+					selected = (selected + 1) % 18;
+				} while (selected == 12 || selected == 16);  /* Skip empty lines */
+				continue;
 			} else if (ch == '\n' || ch == '\r') {  /* Enter key */
 				/* Map selected index to choice letter */
 				const char mapping[] = "ABCDEFGHIJKL MNP Q";
@@ -456,7 +472,7 @@ void app_exec() {
 			choice = toupper(choice & 0xFF);
 		}
 		
-		if (choice < 'A' && choice > 'M') continue;
+		if (choice < 'A' || choice > 'Q') continue;
 				
 		clear();
 
@@ -511,15 +527,46 @@ void app_params(int argc, char ** argv) {
 	/* command line parsing */
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
-			if(strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0)
+			if(strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0) {
 				app_version();
-			if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+			}
+			else if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
 				app_help();
-			if(strcmp(argv[i], "--speed") == 0 || strcmp(argv[i], "-s") == 0) {
-				if (argv[i+1])
-					sscanf(argv[i+1], "%d", &SAMPLE_SPEED);
-				else
-					die(0, "No value given.\n");
+			}
+			else if(strcmp(argv[i], "--speed") == 0 || strcmp(argv[i], "-s") == 0) {
+				if (i + 1 < argc) {
+					int speed;
+					if (sscanf(argv[i+1], "%d", &speed) == 1) {
+						if (speed < 0) {
+							fprintf(stderr, "Error: Speed value must be non-negative (got %d)\n", speed);
+							fprintf(stderr, "Use --help for usage information\n");
+							exit(1);
+						}
+						if (speed > 10000) {
+							fprintf(stderr, "Warning: Speed value %d is very high (>10 seconds)\n", speed);
+							fprintf(stderr, "Continuing anyway...\n");
+						}
+						SAMPLE_SPEED = speed;
+						i++;  /* Skip next argument since we consumed it */
+					}
+					else {
+						fprintf(stderr, "Error: Invalid speed value '%s'\n", argv[i+1]);
+						fprintf(stderr, "Speed must be a non-negative integer\n");
+						fprintf(stderr, "Use --help for usage information\n");
+						exit(1);
+					}
+				}
+				else {
+					fprintf(stderr, "Error: --speed/-s requires a value\n");
+					fprintf(stderr, "Example: sortvis --speed 100\n");
+					fprintf(stderr, "Use --help for usage information\n");
+					exit(1);
+				}
+			}
+			else {
+				fprintf(stderr, "Error: Unknown option '%s'\n", argv[i]);
+				fprintf(stderr, "Use --help for usage information\n");
+				exit(1);
 			}
 		}
 	}

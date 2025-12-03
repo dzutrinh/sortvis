@@ -23,12 +23,52 @@ int getch() {
 #else
 	struct termios oldt, newt;
 	int ch;
-	tcgetattr(STDIN_FILENO, &oldt);
+	if (tcgetattr(STDIN_FILENO, &oldt) == -1) {
+		return -1;  /* Error: not a terminal */
+	}
 	newt = oldt;
 	newt.c_lflag &= ~(ICANON | ECHO);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &newt) == -1) {
+		return -1;  /* Error: cannot set terminal mode */
+	}
 	ch = getchar();
 	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	return ch;
+#endif
+}
+
+/* Read arrow keys and special keys in a cross-platform way */
+/* Returns: 'U' for up, 'D' for down, 'L' for left, 'R' for right, or the actual character */
+int getch_arrow() {
+#ifdef _WIN32
+	int ch = _getch();
+	if (ch == 0 || ch == 224) {  /* Extended key prefix on Windows */
+		ch = _getch();
+		switch (ch) {
+			case 72: return 'U';  /* Up arrow */
+			case 80: return 'D';  /* Down arrow */
+			case 75: return 'L';  /* Left arrow */
+			case 77: return 'R';  /* Right arrow */
+			default: return ch;
+		}
+	}
+	return ch;
+#else
+	int ch = getch();
+	if (ch == 27) {  /* ESC sequence */
+		int next = getch();
+		if (next == '[') {  /* ANSI escape sequence */
+			int arrow = getch();
+			switch (arrow) {
+				case 'A': return 'U';  /* Up arrow */
+				case 'B': return 'D';  /* Down arrow */
+				case 'C': return 'R';  /* Right arrow */
+				case 'D': return 'L';  /* Left arrow */
+				default: return arrow;
+			}
+		}
+		return next;
+	}
 	return ch;
 #endif
 }

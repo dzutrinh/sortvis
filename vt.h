@@ -26,18 +26,34 @@
 
 bool vt_start() {
 #ifndef _WIN32	
-	setlocale(LC_ALL, "");			/* enable Unicode printf() */
+	if (setlocale(LC_ALL, "") == NULL) {
+		fprintf(stderr, "Warning: Could not set locale for Unicode support\n");
+	}
 	return true;
 #else
 	/* enable Virtual Terminal in Windows CMD */
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (hConsole) {
-		GetConsoleMode(hConsole, &vtOldMode);
-		SetConsoleMode(hConsole, vtOldMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-		return true;
-	}
-	else 
+	if (hConsole == INVALID_HANDLE_VALUE || hConsole == NULL) {
+		fprintf(stderr, "Error: Cannot get console handle\n");
+		fprintf(stderr, "Make sure you're running in a console window\n");
 		return false;
+	}
+	
+	if (!GetConsoleMode(hConsole, &vtOldMode)) {
+		fprintf(stderr, "Error: Cannot get console mode\n");
+		fprintf(stderr, "This may not be a valid console window\n");
+		return false;
+	}
+	
+	DWORD newMode = vtOldMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+	if (!SetConsoleMode(hConsole, newMode)) {
+		fprintf(stderr, "Error: Cannot enable Virtual Terminal processing\n");
+		fprintf(stderr, "Windows 10 (Build 10586) or later is required\n");
+		fprintf(stderr, "Your Windows version may not support ANSI escape sequences\n");
+		return false;
+	}
+	
+	return true;
 #endif
 }
 

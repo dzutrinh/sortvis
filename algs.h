@@ -34,6 +34,16 @@ void sample_generate_random(SAMPLES * s) {
 		sample_swap(s, rand() % SAMPLE_SIZE, rand() % SAMPLE_SIZE);
 }
 
+void sample_validate(SAMPLES * s) {
+	/* Ensure samples are within valid range */
+	for (int i = 0; i < SAMPLE_SIZE; i++) {
+		if (s->data[i] < 1 || s->data[i] > SAMPLE_SIZE) {
+			fprintf(stderr, "Warning: Invalid sample value %d at index %d\n", s->data[i], i);
+			s->data[i] = (s->data[i] < 1) ? 1 : SAMPLE_SIZE;
+		}
+	}
+}
+
 bool sample_generate(SAMPLES * s) {
 	char choice;
 	int selected = 0;
@@ -62,26 +72,22 @@ bool sample_generate(SAMPLES * s) {
 			}
 		}
 		
-		printf(VT_RESET"\nUse "VT_ATTR(33)"\u2191\u2193"VT_DEFAULTATTR" or "VT_ATTR(33)"A-D"VT_DEFAULTATTR", press "VT_ATTR(33)"ENTER"VT_DEFAULTATTR" to select\n");
+		printf(VT_RESET"\nUse "VT_ATTR(33)"UP/DOWN"VT_DEFAULTATTR" arrows or "VT_ATTR(33)"A-D"VT_DEFAULTATTR", press "VT_ATTR(33)"ENTER"VT_DEFAULTATTR" to select\n");
 		fflush(stdout);
 		
-		int ch = getch();
+		int ch = getch_arrow();
 		
 		/* Handle arrow keys */
-		if (ch == 27 || ch == 224) {
-			getch();
-			ch = getch();
-			if (ch == 'A' || ch == 72) {  /* Up arrow */
-				do {
-					selected = (selected - 1 + 5) % 5;
-				} while (selected == 3);  /* Skip separator */
-				continue;
-			} else if (ch == 'B' || ch == 80) {  /* Down arrow */
-				do {
-					selected = (selected + 1) % 5;
-				} while (selected == 3);  /* Skip separator */
-				continue;
-			}
+		if (ch == 'U') {  /* Up arrow */
+			do {
+				selected = (selected - 1 + 5) % 5;
+			} while (selected == 3);  /* Skip separator */
+			continue;
+		} else if (ch == 'D') {  /* Down arrow */
+			do {
+				selected = (selected + 1) % 5;
+			} while (selected == 3);  /* Skip separator */
+			continue;
 		} else if (ch == '\n' || ch == '\r') {  /* Enter */
 			const char mapping[] = "ABCD";
 			choice = (selected == 4) ? 'D' : mapping[selected];

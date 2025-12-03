@@ -74,12 +74,51 @@ int getch(void) {
 #else
 	struct termios oldt, newt;
 	int ch;
-	tcgetattr(STDIN_FILENO, &oldt);
+	if (tcgetattr(STDIN_FILENO, &oldt) == -1) {
+		return -1;
+	}
 	newt = oldt;
 	newt.c_lflag &= ~(ICANON | ECHO);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &newt) == -1) {
+		return -1;
+	}
 	ch = getchar();
 	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	return ch;
+#endif
+}
+
+/* getch_arrow() stub for tests (not used but needed for compilation) */
+int getch_arrow(void) {
+#ifdef _WIN32
+	int ch = _getch();
+	if (ch == 0 || ch == 224) {
+		ch = _getch();
+		switch (ch) {
+			case 72: return 'U';
+			case 80: return 'D';
+			case 75: return 'L';
+			case 77: return 'R';
+			default: return ch;
+		}
+	}
+	return ch;
+#else
+	int ch = getch();
+	if (ch == 27) {
+		int next = getch();
+		if (next == '[') {
+			int arrow = getch();
+			switch (arrow) {
+				case 'A': return 'U';
+				case 'B': return 'D';
+				case 'C': return 'R';
+				case 'D': return 'L';
+				default: return arrow;
+			}
+		}
+		return next;
+	}
 	return ch;
 #endif
 }
@@ -98,8 +137,8 @@ typedef struct {
 TestStats stats = {0, 0, 0};
 
 /* Color output for test results */
-#define TEST_PASS "\x1B[32m✓ PASS\x1B[0m"
-#define TEST_FAIL "\x1B[31m✗ FAIL\x1B[0m"
+#define TEST_PASS "\x1B[32m[PASS]\x1B[0m"
+#define TEST_FAIL "\x1B[31m[FAIL]\x1B[0m"
 #define TEST_INFO "\x1B[36m[INFO]\x1B[0m"
 #define TEST_ERROR "\x1B[31m[ERROR]\x1B[0m"
 
@@ -355,20 +394,20 @@ int main(int argc, char **argv) {
 	printf("|  Total Tests:  %-4d                                |\n", stats.total_tests);
 	
 	if (stats.failed_tests == 0) {
-		printf("|  Passed:       \x1B[32m%-4d ✓\x1B[0m                              |\n", stats.passed_tests);
+		printf("|  Passed:       \x1B[32m%-4d [OK]\x1B[0m                           |\n", stats.passed_tests);
 		printf("|  Failed:       \x1B[32m%-4d\x1B[0m                                |\n", stats.failed_tests);
 	} else {
-		printf("|  Passed:       %-4d                                |}\n", stats.passed_tests);
-		printf("|  Failed:       \x1B[31m%-4d ✗\x1B[0m                              |\n", stats.failed_tests);
+		printf("|  Passed:       %-4d                                |\n", stats.passed_tests);
+		printf("|  Failed:       \x1B[31m%-4d [!!]\x1B[0m                           |\n", stats.failed_tests);
 	}
 	
 	printf("+----------------------------------------------------+\n");
 	
 	if (stats.failed_tests == 0) {
-		printf("\n\x1B[32m🎉 All tests passed successfully!\x1B[0m\n\n");
+		printf("\n\x1B[32mAll tests passed successfully!\x1B[0m\n\n");
 		return 0;
 	} else {
-		printf("\n\x1B[31m⚠️  Some tests failed. Please review the errors above.\x1B[0m\n\n");
+		printf("\n\x1B[31mSome tests failed. Please review the errors above.\x1B[0m\n\n");
 		return 1;
 	}
 }
