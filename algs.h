@@ -153,6 +153,8 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 	char temp[1024], buffer[128], sep[BOARD_WIDTH+1];
 	static char screen[16384];  /* Large buffer for entire screen */
 	static int last_u = -1, last_v = -1;  /* Track last swap for highlighting */
+	char stats_lines[10][64];  /* Statistics lines to display on right */
+	int stats_count = 0;
 	
 	/* skip visualization if disabled */
 	if (!ENABLE_VISUALIZATION) return;
@@ -165,15 +167,29 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 		sep[i] = VBAR;
 	sep[BOARD_WIDTH] = 0;
 
+	/* Prepare statistics for right side display */
+	if (SHOW_STATISTICS) {
+		sprintf(stats_lines[stats_count++], "%s+-----+", VT_COLOR(8));
+		sprintf(stats_lines[stats_count++], "%s|%sSTATS%s|", VT_COLOR(8), VT_COLOR(220), VT_COLOR(8));
+		sprintf(stats_lines[stats_count++], "%s+-----+", VT_COLOR(8));
+		sprintf(stats_lines[stats_count++], "%sCMP:%s%ld", VT_COLOR(244), VT_COLOR(39), s->comparisons);
+		sprintf(stats_lines[stats_count++], "%sSWP:%s%ld", VT_COLOR(244), VT_COLOR(196), s->swaps);
+	}
+
 	/* Add sort algorithm title to buffer */
 	strcat(screen, sortTitle);
 	strcat(screen, "\n");
 	
 	/* Add top horz. line to buffer */
-	sprintf(temp, "%s%s\n", VT_COLOR(8), sep);
+	sprintf(temp, "%s%s", VT_COLOR(8), sep);
+	if (SHOW_STATISTICS && stats_count > 0) {
+		strcat(temp, " ");
+		strcat(temp, stats_lines[0]);
+	}
+	strcat(temp, "\n");
 	strcat(screen, temp);
 
-	/* Add sort samples to buffer */
+	/* Add sort samples to buffer with stats on right */
 	for (j = 0; j < s->max; j++) {
 		temp[0] = 0;
 		for (i = 0; i < SAMPLE_SIZE; i++) {
@@ -181,12 +197,24 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 			sprintf(buffer, " %s%lc%lc ", colors[s->data[i]-1], (wint_t) c, (wint_t) c);
 			strcat(temp, buffer);
 		}
+		
+		/* Add stats on the right side for appropriate rows */
+		if (SHOW_STATISTICS && j + 1 < stats_count) {
+			strcat(temp, " ");
+			strcat(temp, stats_lines[j + 1]);
+		}
+		
 		strcat(temp, "\n");
 		strcat(screen, temp);
 	}
 	
 	/* Add bottom horz. line to buffer */
-	sprintf(temp, "%s%s\n", VT_COLOR(8), sep);
+	sprintf(temp, "%s%s", VT_COLOR(8), sep);
+	if (SHOW_STATISTICS && s->max + 1 < stats_count) {
+		strcat(temp, " ");
+		strcat(temp, stats_lines[s->max + 1]);
+	}
+	strcat(temp, "\n");
 	strcat(screen, temp);
 	
 	/* Add sort values to buffer with enhanced highlighting */
@@ -207,6 +235,10 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 		}
 		strcat(temp, buffer);
 	}
+	if (SHOW_STATISTICS && s->max + 2 < stats_count) {
+		strcat(temp, " ");
+		strcat(temp, stats_lines[s->max + 2]);
+	}
 	strcat(temp, "\n");
 	strcat(screen, temp);
 	
@@ -226,20 +258,12 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 		sprintf(buffer, " %lc%lc ", (wint_t)c, (wint_t)c);
 		strcat(temp, buffer);
 	}
+	if (SHOW_STATISTICS && s->max + 3 < stats_count) {
+		strcat(temp, " ");
+		strcat(temp, stats_lines[s->max + 3]);
+	}
 	strcat(temp, "\n");
 	strcat(screen, temp);
-	
-	/* Add statistics bar if enabled */
-	if (SHOW_STATISTICS) {
-		sprintf(temp, "%s%s", VT_COLOR(8), sep);
-		strcat(screen, "\n");
-		strcat(screen, temp);
-		sprintf(temp, "\n%sComparisons: %s%-8ld%s  Swaps: %s%-8ld%s  Speed: %dms\n",
-				VT_COLOR(244), VT_COLOR(39), s->comparisons, 
-				VT_COLOR(244), VT_COLOR(196), s->swaps,
-				VT_COLOR(244), SAMPLE_SPEED);
-		strcat(screen, temp);
-	}
 	
 	/* Write entire screen at once (atomic operation) */
 	fputs(screen, stdout);
