@@ -242,54 +242,6 @@ void app_init() {
 			colors[16], 
 			VT_COLOR(8),			
 			VT_COLOR(8));
-
-	sprintf(menuCommands, 
-			"%s| %sA%s. Interchange Sort  %s|\n"
-			"%s| %sB%s. Bubble Sort       %s|\n"
-			"%s| %sC%s. Cocktail Sort     %s|\n"
-			"%s| %sD%s. Selection Sort    %s|\n"
-			"%s| %sE%s. Insertion Sort    %s|\n"
-			"%s| %sF%s. Shell Sort        %s|\n"
-			"%s| %sG%s. Comb Sort         %s|\n"
-			"%s| %sH%s. Merge Sort        %s|\n"
-			"%s| %sI%s. Heap Sort         %s|\n"
-			"%s| %sJ%s. Counting Sort     %s|\n"
-			"%s| %sK%s. Quick Sort        %s|\n"
-			"%s| %sL%s. Radix Sort        %s|\n"
-			"%s+----------------------+\n"
-			"%s| %sM%s. View data         %s|\n"
-			"%s| %sN%s. Generate new data %s|\n"
-			"%s| %sP%s. Select gradient   %s|\n"	
-			"%s+----------------------+\n"
-			"%s| %sQ%s. Exit              %s|\n"
-			"%so----------------------o\n",
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(153), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(147), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(147), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(147), VT_DEFAULTATTR, VT_COLOR(8),
-			VT_COLOR(8),
-			VT_COLOR(8), VT_COLOR(228),  VT_DEFAULTATTR, VT_COLOR(8), 
-			VT_COLOR(8));
-	
-	sprintf(menuFooter, 
-			"%sChoice (%sA%s-%sQ%s): ",
-			VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR, VT_ATTR(33), VT_DEFAULTATTR);
-
-	strcpy(menuText, menuTitle);
-	strcat(menuText, menuCommands);
-	strcat(menuText, menuFooter);
 }
 
 bool select_gradient() {
@@ -387,12 +339,12 @@ void app_menu_arrow(int selected) {
 	printf("%s", menuTitle);
 	for (int i = 0; i < 19; i++) {
 		if (items[i][0] == '\0') {
-			printf("%s|                      %s|\n", VT_COLOR(8), VT_COLOR(8));
+			printf("%so----------------------o\n", VT_COLOR(8));
 		} else {
 			if (i == selected) {
-				printf("%s| %s%-20s %s|\n", VT_COLOR(8), VT_ATTR(7), items[i], VT_DEFAULTATTR);
+				printf("%s| %s%-20s %s|%s\n", VT_COLOR(8), VT_ATTR(7), items[i], VT_COLOR(8), VT_DEFAULTATTR);
 			} else {
-				printf("%s| %s%-20s %s|\n", VT_COLOR(8), VT_COLOR(153), items[i], VT_DEFAULTATTR);
+				printf("%s| %s%-20s %s|%s\n", VT_COLOR(8), VT_COLOR(153), items[i], VT_COLOR(8), VT_DEFAULTATTR);
 			}
 		}
 	}
