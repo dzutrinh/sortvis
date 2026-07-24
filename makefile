@@ -19,7 +19,7 @@ endif
 
 all: sortvis
 
-sortvis: sortvis.c
+sortvis: sortvis.c sortvis.h algs.h helpers.h
 	$(CC) $(CFLAGS) $< -o $(BIN) $(LFLAGS)
 
 test: test.c

@@ -2,7 +2,7 @@
  *	SORTVIS.H
  *	---------
  *	Definitions for sort algorithms visualization
- *	Version 0.5.0
+ *	Version 0.6.0
  *	Coded by Trinh D.D. Nguyen
  *
  */
@@ -15,7 +15,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define	APP_VERSION	0x0500		/* app version and build number */
+#define	APP_VERSION	0x0600		/* app version and build number */
 #define	APP_BUILD	0x0000
 
 #ifndef _WIN32					/* printf() Unicode support on non-Windows platforms */
@@ -375,16 +375,17 @@ void app_menu_arrow(int selected) {
 		"J. Counting Sort",
 		"K. Quick Sort",
 		"L. Radix Sort",
+		"M. Circle Sort",
 		"",
-		"M. View Samples",
-		"N. Generate New",
+		"N. View Samples",
+		"O. Generate New",
 		"P. Select Gradient",
 		"",
 		"Q. Exit"
 	};
 	
 	printf("%s", menuTitle);
-	for (int i = 0; i < 18; i++) {
+	for (int i = 0; i < 19; i++) {
 		if (items[i][0] == '\0') {
 			printf("%s|                      %s|\n", VT_COLOR(8), VT_COLOR(8));
 		} else {
@@ -462,17 +463,17 @@ void app_exec() {
 			/* Handle arrow keys */
 			if (ch == 'U') {  /* Up arrow */
 				do {
-					selected = (selected - 1 + 18) % 18;
-				} while (selected == 12 || selected == 16);  /* Skip empty lines */
+					selected = (selected - 1 + 19) % 19;
+				} while (selected == 13 || selected == 17);  /* Skip empty lines */
 				continue;
 			} else if (ch == 'D') {  /* Down arrow */
 				do {
-					selected = (selected + 1) % 18;
-				} while (selected == 12 || selected == 16);  /* Skip empty lines */
+					selected = (selected + 1) % 19;
+				} while (selected == 13 || selected == 17);  /* Skip empty lines */
 				continue;
 			} else if (ch == '\n' || ch == '\r') {  /* Enter key */
 				/* Map selected index to choice letter */
-				const char mapping[] = "ABCDEFGHIJKL MNP Q";
+				const char mapping[] = "ABCDEFGHIJKLM NOP Q";
 				choice = mapping[selected];
 			} else if (ch >= 'a' && ch <= 'z') {
 				choice = toupper(ch);
@@ -504,9 +505,10 @@ void app_exec() {
 		case 'J' : 	sort = origin; sample_sort_count      (&sort);                    break; 
 		case 'K' : 	sort = origin; sample_sort_quick      (&sort, 0, SAMPLE_SIZE-1);  break;
 		case 'L' : 	sort = origin; sample_sort_radix      (&sort);					  break;
+		case 'M' : 	sort = origin; sample_sort_circle     (&sort);					  break;
 
-		case 'M' : 	title("CURRENT SORT SAMPLES"); sample_show(&origin, -1, -1, -1);  break;
-		case 'N' : 	if (sample_generate(&origin)) {
+		case 'N' : 	title("CURRENT SORT SAMPLES"); sample_show(&origin, -1, -1, -1);  break;
+		case 'O' : 	if (sample_generate(&origin)) {
 						title("NEW SAMPLES GENERATED"); 
 			       		sample_show(&origin, -1, -1, -1);
 					}

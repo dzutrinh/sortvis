@@ -656,4 +656,58 @@ void sample_sort_radix(SAMPLES * s) {
     sample_show(s, -1, -1, -1);
 }
 
+bool circleSortRec(SAMPLES * s, int left, int right) {
+    bool swapped = false;
+
+    // Base case: single element
+    if (left == right) {
+        return false;
+    }
+
+    int l = left;
+    int r = right;
+
+    // Compare and swap elements from both ends toward the center
+    while (l < r) {
+        if (s->data[l] > s->data[r]) {
+			s->comparisons++;
+			s->swaps++;
+            int temp = s->data[l];
+            s->data[l] = s->data[r];
+            s->data[r] = temp;
+            swapped = true;
+
+			sample_show(s, -1, l, r);
+    		mssleep(SAMPLE_SPEED);
+        }
+        l++;
+        r--;
+    }
+
+    // If odd number of elements, check the middle element
+    if (l == r && s->data[l] > s->data[r + 1]) {
+        int temp = s->data[l];
+        s->data[l] = s->data[r + 1];
+        s->data[r + 1] = temp;
+        swapped = true;
+		s->comparisons++;
+		s->swaps++;
+		sample_show(s, -1, l, r + 1);
+    	mssleep(SAMPLE_SPEED);
+    }
+
+    // Recursively sort the left and right halves
+    int mid = (right - left) / 2;
+    bool leftSwapped = circleSortRec(s, left, left + mid);
+    bool rightSwapped = circleSortRec(s, left + mid + 1, right);
+
+    return swapped || leftSwapped || rightSwapped;
+}
+
+void sample_sort_circle(SAMPLES * s) {
+	title("CIRCLE SORT");
+	int n = s->max;
+	while (circleSortRec(s, 0, n - 1));
+}
+
 #endif

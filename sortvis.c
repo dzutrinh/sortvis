@@ -2,19 +2,19 @@
  *	SORTVIS.C
  *	---------
  *	Sort algorithms visualization
- *	Version 0.5.0
+ *	Version 0.6.0
  *	Coded by Trinh D.D. Nguyen
  *	MIT licensed
  *
  *	Compile: 
- *		gcc -O2 sortvis.c -o bin/sortvis -s
+ *		gcc -O2 sortvis.c -o sortvis
  *	or:
  *		make
  *	or:
  *		mingw32-make
  *	
  *	Tested on the following platforms:
- *	- macOS Tahoe, LLVM Clang 17
+ *	- macOS Tahoe, LLVM Clang 17, LLVM Clang 21
  *	- Windows 10/11 with MinGW
  *
  *	Notes:
@@ -42,6 +42,7 @@
  *  - Improved error handling for command-line arguments
  *  - Fixed Win32 arrow key detection compatibility
  *  - Added robust terminal initialization with error messages
+ *  - Added Circle Sort visualization
  */
 
 #include "sortvis.h"
