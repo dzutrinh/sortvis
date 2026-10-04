@@ -16,40 +16,54 @@ void die(int code, const char * prompt) {
 	exit(code);
 }
 
-/* Read a single character without waiting for Enter */
+/* Special key codes returned by getch_arrow(), kept outside the
+   character range so they never collide with letter keys */
+#define	KEY_NONE	0x000		/* unrecognized key, should be ignored */
+#define	KEY_UP		0x100
+#define	KEY_DOWN	0x101
+#define	KEY_LEFT	0x102
+#define	KEY_RIGHT	0x103
+
+/* Read a single character without waiting for Enter, returns EOF on end of input */
 int getch() {
 #ifdef _WIN32
 	return _getch();
 #else
 	struct termios oldt, newt;
-	int ch;
+	unsigned char c;
 	if (tcgetattr(STDIN_FILENO, &oldt) == -1) {
-		return -1;  /* Error: not a terminal */
+		/* not a terminal: fall back to plain (buffered) input */
+		return getchar();
 	}
 	newt = oldt;
 	newt.c_lflag &= ~(ICANON | ECHO);
+	newt.c_cc[VMIN] = 1;
+	newt.c_cc[VTIME] = 0;
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &newt) == -1) {
-		return -1;  /* Error: cannot set terminal mode */
+		return EOF;  /* Error: cannot set terminal mode */
 	}
-	ch = getchar();
+	/* use read() rather than getchar() so no bytes are left behind in the
+	   stdio buffer where the shell's "read" in waitkey() cannot see them */
+	int ch = (read(STDIN_FILENO, &c, 1) == 1) ? c : EOF;
 	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 	return ch;
 #endif
 }
 
 /* Read arrow keys and special keys in a cross-platform way */
-/* Returns: 'U' for up, 'D' for down, 'L' for left, 'R' for right, or the actual character */
+/* Returns: KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_NONE for other special
+   keys, EOF on end of input, or the actual character */
 int getch_arrow() {
 #ifdef _WIN32
 	int ch = _getch();
 	if (ch == 0 || ch == 224) {  /* Extended key prefix on Windows */
 		ch = _getch();
 		switch (ch) {
-			case 72: return 'U';  /* Up arrow */
-			case 80: return 'D';  /* Down arrow */
-			case 75: return 'L';  /* Left arrow */
-			case 77: return 'R';  /* Right arrow */
-			default: return ch;
+			case 72: return KEY_UP;
+			case 80: return KEY_DOWN;
+			case 75: return KEY_LEFT;
+			case 77: return KEY_RIGHT;
+			default: return KEY_NONE;  /* Home, End, PgUp, PgDn, F-keys, ... */
 		}
 	}
 	return ch;
@@ -57,17 +71,20 @@ int getch_arrow() {
 	int ch = getch();
 	if (ch == 27) {  /* ESC sequence */
 		int next = getch();
-		if (next == '[') {  /* ANSI escape sequence */
-			int arrow = getch();
-			switch (arrow) {
-				case 'A': return 'U';  /* Up arrow */
-				case 'B': return 'D';  /* Down arrow */
-				case 'C': return 'R';  /* Right arrow */
-				case 'D': return 'L';  /* Left arrow */
-				default: return arrow;
+		if (next == '[' || next == 'O') {  /* CSI or SS3 sequence */
+			int code = getch();
+			switch (code) {
+				case 'A': return KEY_UP;
+				case 'B': return KEY_DOWN;
+				case 'C': return KEY_RIGHT;
+				case 'D': return KEY_LEFT;
 			}
+			/* skip the rest of longer sequences such as ESC [ 3 ~ */
+			while (code != EOF && (code < 0x40 || code > 0x7E))
+				code = getch();
+			return KEY_NONE;
 		}
-		return next;
+		return (next == EOF) ? EOF : KEY_NONE;
 	}
 	return ch;
 #endif
@@ -79,10 +96,11 @@ void waitkey() {
 #else
 	#define	PAUSE 	"pause"	
 #endif
-	system(PAUSE);
+	if (system(PAUSE) == -1) getch();
 }
 
 void mssleep(long ms) {
+	if (ms <= 0) return;
 #ifndef _WIN32
 	struct timespec rem;
 	struct timespec req = { (int)(ms / 1000U), (ms % 1000U) * 1000000UL };

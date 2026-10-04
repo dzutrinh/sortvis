@@ -47,6 +47,7 @@ void sample_generate_ascending(SAMPLES * s) {
 	s->comparisons = 0;
 	s->swaps = 0;
 	s->sorted_until = -1;
+	s->sorted_from = SAMPLE_SIZE;
 }
 
 void sample_generate_descending(SAMPLES * s) {
@@ -56,17 +57,17 @@ void sample_generate_descending(SAMPLES * s) {
 	s->comparisons = 0;
 	s->swaps = 0;
 	s->sorted_until = -1;
+	s->sorted_from = SAMPLE_SIZE;
 }
 
 void sample_generate_random(SAMPLES * s) {
 	int i;
 	sample_generate_ascending(s);
-	for (i = 0; i < SAMPLE_SIZE; i++)	/* shuffling */
-		sample_swap(s, rand() % SAMPLE_SIZE, rand() % SAMPLE_SIZE);
+	for (i = SAMPLE_SIZE - 1; i > 0; i--)	/* Fisher-Yates shuffle */
+		sample_swap(s, i, rand() % (i + 1));
 	/* Reset stats after shuffle */
 	s->comparisons = 0;
 	s->swaps = 0;
-	s->sorted_until = -1;
 }
 
 void sample_validate(SAMPLES * s) {
@@ -113,21 +114,25 @@ bool sample_generate(SAMPLES * s) {
 		int ch = getch_arrow();
 		
 		/* Handle arrow keys */
-		if (ch == 'U') {  /* Up arrow */
+		if (ch == EOF) {
+			return false;
+		} else if (ch == KEY_UP) {
 			do {
 				selected = (selected - 1 + 5) % 5;
 			} while (selected == 3);  /* Skip separator */
 			continue;
-		} else if (ch == 'D') {  /* Down arrow */
+		} else if (ch == KEY_DOWN) {
 			do {
 				selected = (selected + 1) % 5;
 			} while (selected == 3);  /* Skip separator */
 			continue;
 		} else if (ch == '\n' || ch == '\r') {  /* Enter */
-			const char mapping[] = "ABCD";
-			choice = (selected == 4) ? 'D' : mapping[selected];
+			const char mapping[] = "ABC D";
+			choice = mapping[selected];
+		} else if (ch > 0 && ch < 0x100) {
+			choice = toupper(ch);
 		} else {
-			choice = toupper(ch & 0xFF);
+			continue;
 		}
 		
 		switch (choice) {
@@ -223,7 +228,7 @@ void sample_show(SAMPLES * s, int u, int v, int t){
 		if (i == u || i == v) {
 			/* Current comparison - bright yellow */
 			sprintf(buffer, "%s%s%3d%s ", VT_ATTR(1), VT_COLOR(226), s->data[i], VT_DEFAULTATTR);
-		} else if (SHOW_SORTED_REGION && s->sorted_until >= 0 && i <= s->sorted_until) {
+		} else if (SHOW_SORTED_REGION && (i <= s->sorted_until || i >= s->sorted_from)) {
 			/* Sorted region - green */
 			sprintf(buffer, "%s%3d%s ", VT_COLOR(46), s->data[i], VT_DEFAULTATTR);
 		} else if (HIGHLIGHT_SWAPS && (i == last_u || i == last_v)) {
@@ -312,12 +317,12 @@ void sample_sort_selection(SAMPLES * s) {
 		}
 		if (minidx != i) {
 			if (SMOOTH_TRANSITIONS) {
-				sample_swap_animated(s, i, minidx, i, j, minidx);
+				sample_swap_animated(s, i, minidx, i, minidx, -1);
 			} else {
 				sample_swap(s, i, minidx);
 			}
 		}
-		sample_show(s, i, j, minidx);
+		sample_show(s, i, minidx, -1);
 	}
 	s->sorted_until = SAMPLE_SIZE - 1;
 	sample_show(s, -1, -1, -1);
@@ -329,7 +334,7 @@ void sample_sort_bubble(SAMPLES * s) {
     title("BUBBLE SORT");
 	for (i = 0; i < SAMPLE_SIZE-1; i++) {
 		swapped = false;
-		s->sorted_until = SAMPLE_SIZE - i - 1;  /* Elements after this are sorted */
+		s->sorted_from = SAMPLE_SIZE - i;  /* Elements from here on are sorted */
 		for (j = 0; j < SAMPLE_SIZE-i-1; j++) {
 			s->comparisons++;
 			if (s->data[j] > s->data[j+1]) {
@@ -427,7 +432,7 @@ void sample_sort_heap(SAMPLES * s) {
     title("HEAP SORT");
     for (i = SAMPLE_SIZE / 2 - 1; i >= 0; i--)
 		heapify(s, SAMPLE_SIZE, i);
-    for (i = SAMPLE_SIZE - 1; i >= 0; i--) {
+    for (i = SAMPLE_SIZE - 1; i > 0; i--) {
         sample_swap(s, 0, i);
         sample_show(s, 0, i, -1);
         mssleep(SAMPLE_SPEED);
@@ -451,11 +456,11 @@ int partition(SAMPLES * s, int low, int high)
         if (i < j) {
 			sample_swap(s, i, j);
     	}
-        sample_show(s, i, j, pivot);
+        sample_show(s, i, j, low);
    	    mssleep(SAMPLE_SPEED);
     }
-    sample_swap(s, low, j);
-    sample_show(s, low, j, pivot);
+    if (low != j) sample_swap(s, low, j);
+    sample_show(s, low, j, j);
    	mssleep(SAMPLE_SPEED);
     return j;
 }
@@ -656,11 +661,12 @@ void sample_sort_radix(SAMPLES * s) {
     sample_show(s, -1, -1, -1);
 }
 
-bool circleSortRec(SAMPLES * s, int left, int right) {
+/*---- CIRCLE SORT -----------------------*/
+bool circle_sort_recursive(SAMPLES * s, int left, int right) {
     bool swapped = false;
 
     // Base case: single element
-    if (left == right) {
+    if (left >= right) {
         return false;
     }
 
@@ -669,45 +675,40 @@ bool circleSortRec(SAMPLES * s, int left, int right) {
 
     // Compare and swap elements from both ends toward the center
     while (l < r) {
+        s->comparisons++;
         if (s->data[l] > s->data[r]) {
-			s->comparisons++;
-			s->swaps++;
-            int temp = s->data[l];
-            s->data[l] = s->data[r];
-            s->data[r] = temp;
+            sample_swap(s, l, r);
             swapped = true;
-
-			sample_show(s, -1, l, r);
-    		mssleep(SAMPLE_SPEED);
         }
+        sample_show(s, l, r, -1);
+        mssleep(SAMPLE_SPEED);
         l++;
         r--;
     }
 
-    // If odd number of elements, check the middle element
-    if (l == r && s->data[l] > s->data[r + 1]) {
-        int temp = s->data[l];
-        s->data[l] = s->data[r + 1];
-        s->data[r + 1] = temp;
-        swapped = true;
-		s->comparisons++;
-		s->swaps++;
-		sample_show(s, -1, l, r + 1);
-    	mssleep(SAMPLE_SPEED);
+    // If odd number of elements, check the middle element against its right neighbour
+    if (l == r) {
+        s->comparisons++;
+        if (s->data[l] > s->data[r + 1]) {
+            sample_swap(s, l, r + 1);
+            swapped = true;
+        }
+        sample_show(s, l, r + 1, -1);
+        mssleep(SAMPLE_SPEED);
     }
 
     // Recursively sort the left and right halves
     int mid = (right - left) / 2;
-    bool leftSwapped = circleSortRec(s, left, left + mid);
-    bool rightSwapped = circleSortRec(s, left + mid + 1, right);
+    bool leftSwapped = circle_sort_recursive(s, left, left + mid);
+    bool rightSwapped = circle_sort_recursive(s, left + mid + 1, right);
 
     return swapped || leftSwapped || rightSwapped;
 }
 
 void sample_sort_circle(SAMPLES * s) {
 	title("CIRCLE SORT");
-	int n = s->max;
-	while (circleSortRec(s, 0, n - 1));
+	while (circle_sort_recursive(s, 0, SAMPLE_SIZE - 1));
+	sample_show(s, -1, -1, -1);
 }
 
 #endif
