@@ -7,27 +7,16 @@ ifeq ($(OS),Windows_NT)
 	RM=del
 	LFLAGS+=-s
 else
-	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Linux)
-		BIN=sortvis
-	endif
-	ifeq ($(UNAME_S),Darwin)
-		BIN=sortvis
-	endif
+	BIN=sortvis
 	RM=rm -f
 endif
 
-all: sortvis
+all: $(BIN)
 
-sortvis: sortvis.c sortvis.h algs.h helpers.h
+$(BIN): sortvis.c sortvis.h algs.h helpers.h vt.h
 	$(CC) $(CFLAGS) $< -o $(BIN) $(LFLAGS)
 
-test: test.c
-	$(CC) $(CFLAGS) $< -o test $(LFLAGS)
-
 clean:
-ifeq ($(OS),Windows_NT)
 	$(RM) $(BIN)
-else
-	$(RM) $(BIN)
-endif
+
+.PHONY: all clean

@@ -9,6 +9,10 @@
 #ifndef __SORTVIS_H__
 #define	__SORTVIS_H__
 
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define	_POSIX_C_SOURCE	200809L	/* nanosleep() & struct timespec under -std=c99 */
+#endif
+
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -58,7 +62,8 @@ typedef struct samples {
 	int max;
 	long comparisons;		/* number of comparisons made */
 	long swaps;				/* number of swaps made */
-	int sorted_until;		/* index where array is sorted (for optimization tracking) */
+	int sorted_until;		/* elements [0, sorted_until] are in final position (-1: none) */
+	int sorted_from;		/* elements [sorted_from, SAMPLE_SIZE) are in final position (SAMPLE_SIZE: none) */
 } SAMPLES;
 
 typedef	char SHADES[SAMPLE_SIZE][16];
@@ -196,13 +201,10 @@ const SHADES SHADE_VIRIDIS =
 
 /* global variables */
 static char		sortTitle[256] = {0};		/* for displaying sort algorithm title */
-static char		menuText[1600] = {0};		/* for setting up main menu */
 static SHADES	colors = {0};				/* for selecting shades for sample rendering */
-static char		menuTitle[1024];
-static char 	menuCommands[1600];
-static char 	menuFooter[64];
+static char		menuTitle[1024];			/* main menu banner */
 
-void set_shades(const SHADES shade) { memcpy(colors, shade, sizeof(SHADES)); }
+void set_shades(const SHADES shade);
 
 void title(const char * name) {
 	sprintf(sortTitle,	"%s%*s%s<%s<%s<%s< %s%s %s>%s>%s>%s>", 
@@ -228,7 +230,9 @@ void app_init() {
 	cursor_hide();
 	srand(time(NULL));
 	set_shades(SHADE_RAINBOW);
-	
+}
+
+void app_menu_title() {
 	sprintf(menuTitle, 
 			"%so----------------------o\n"
 			"%s|  %sS%sO%sR%sT %sV%sI%sS%sU%sA%sL%sI%sZ%sA%sT%sI%sO%sN  %s|\n"
@@ -242,6 +246,11 @@ void app_init() {
 			colors[16], 
 			VT_COLOR(8),			
 			VT_COLOR(8));
+}
+
+void set_shades(const SHADES shade) {
+	memcpy(colors, shade, sizeof(SHADES));
+	app_menu_title();			/* keep the menu banner in the current gradient */
 }
 
 bool select_gradient() {
@@ -280,21 +289,25 @@ bool select_gradient() {
 		int ch = getch_arrow();
 		
 		/* Handle arrow keys */
-		if (ch == 'U') {  /* Up arrow */
+		if (ch == EOF) {
+			return false;
+		} else if (ch == KEY_UP) {
 			do {
 				selected = (selected - 1 + 7) % 7;
 			} while (selected == 5);  /* Skip separator */
 			continue;
-		} else if (ch == 'D') {  /* Down arrow */
+		} else if (ch == KEY_DOWN) {
 			do {
 				selected = (selected + 1) % 7;
 			} while (selected == 5);  /* Skip separator */
 			continue;
 		} else if (ch == '\n' || ch == '\r') {  /* Enter */
-			const char mapping[] = "ABCDEF";
-			choice = (selected == 6) ? 'F' : mapping[selected];
+			const char mapping[] = "ABCDE F";
+			choice = mapping[selected];
+		} else if (ch > 0 && ch < 0x100) {
+			choice = toupper(ch);
 		} else {
-			choice = toupper(ch & 0xFF);
+			continue;
 		}
 		
 		switch (choice) {
@@ -307,10 +320,6 @@ bool select_gradient() {
 		default: continue;
 		}
 	}
-}
-
-void app_menu() {
-	fputs(menuText, stdout);	
 }
 
 void app_menu_arrow(int selected) {
@@ -361,8 +370,8 @@ void app_version() {
 			"--------------------------\n"
 		    "SortVis %d.%d.%d (%s)\n%s\n"
 			"--------------------------\n",
-		    (APP_VERSION >> 8) & 0xFF, (APP_VERSION & 0xFF), 
-		    APP_BUILD, APP_PLATFORM,
+		    (APP_VERSION >> 12) & 0x0F, (APP_VERSION >> 8) & 0x0F, 
+		    APP_VERSION & 0xFF, APP_PLATFORM,
 			"Coded by Trinh D.D. Nguyen");
 	die(0, buffer);
 }
@@ -384,7 +393,7 @@ void app_help() {
 	printf("  sortvis --speed 30   Run with faster animation (30ms delay)\n\n");
 	printf("SUPPORTED ALGORITHMS:\n");
 	printf("  Interchange, Bubble, Cocktail, Selection, Insertion, Shell,\n");
-	printf("  Comb, Merge, Heap, Counting, Quick, Radix\n\n");
+	printf("  Comb, Merge, Heap, Counting, Quick, Radix, Circle\n\n");
 	printf("NAVIGATION:\n");
 	printf("  Use UP/DOWN arrow keys or letter keys (A-Q) to navigate menus\n");
 	printf("  Press ENTER to select an option\n\n");
@@ -399,7 +408,8 @@ void app_exec() {
 	int done = 0;
 	char choice;
 	int selected = 0;
-	int useArrows = 1;  /* Use arrow key navigation by default */
+	/* Map menu index to choice letter, blanks are separators */
+	const char mapping[] = "ABCDEFGHIJKLM NOP Q";
 	
 	sample_generate_random(&origin); 
 	
@@ -407,40 +417,36 @@ void app_exec() {
 				
 		clear();
 		
-		if (useArrows) {
-			app_menu_arrow(selected);
-			
-			int ch = getch_arrow();
-			
-			/* Handle arrow keys */
-			if (ch == 'U') {  /* Up arrow */
-				do {
-					selected = (selected - 1 + 19) % 19;
-				} while (selected == 13 || selected == 17);  /* Skip empty lines */
-				continue;
-			} else if (ch == 'D') {  /* Down arrow */
-				do {
-					selected = (selected + 1) % 19;
-				} while (selected == 13 || selected == 17);  /* Skip empty lines */
-				continue;
-			} else if (ch == '\n' || ch == '\r') {  /* Enter key */
-				/* Map selected index to choice letter */
-				const char mapping[] = "ABCDEFGHIJKLM NOP Q";
-				choice = mapping[selected];
-			} else if (ch >= 'a' && ch <= 'z') {
-				choice = toupper(ch);
-			} else if (ch >= 'A' && ch <= 'Z') {
-				choice = ch;
-			} else {
-				continue;
-			}
+		app_menu_arrow(selected);
+		fflush(stdout);
+		
+		int ch = getch_arrow();
+		
+		/* Handle arrow keys */
+		if (ch == EOF) {  /* End of input: nothing more to read */
+			break;
+		} else if (ch == KEY_UP) {
+			do {
+				selected = (selected - 1 + 19) % 19;
+			} while (mapping[selected] == ' ');  /* Skip empty lines */
+			continue;
+		} else if (ch == KEY_DOWN) {
+			do {
+				selected = (selected + 1) % 19;
+			} while (mapping[selected] == ' ');  /* Skip empty lines */
+			continue;
+		} else if (ch == '\n' || ch == '\r') {  /* Enter key */
+			choice = mapping[selected];
+		} else if (ch >= 'a' && ch <= 'z') {
+			choice = toupper(ch);
+		} else if (ch >= 'A' && ch <= 'Z') {
+			choice = ch;
 		} else {
-			app_menu();
-			fflush(stdin); scanf("%c", &choice);	
-			choice = toupper(choice & 0xFF);
+			continue;
 		}
 		
 		if (choice < 'A' || choice > 'Q') continue;
+		selected = (int)(strchr(mapping, choice) - mapping);  /* highlight the chosen item */
 				
 		clear();
 
@@ -480,7 +486,6 @@ void app_exec() {
 					}
 				   	break;
 		
-		case 'X' :
 		case 'Q' : 	done = 1; break;
 		}
 		if (choice >= 'A' && choice <= 'P') waitkey();
@@ -488,7 +493,9 @@ void app_exec() {
 }
 
 void app_close() {
+	reset_colors();
 	cursor_show();
+	fflush(stdout);
 	vt_done();	
 }
 
@@ -504,18 +511,24 @@ void app_params(int argc, char ** argv) {
 			}
 			else if(strcmp(argv[i], "--speed") == 0 || strcmp(argv[i], "-s") == 0) {
 				if (i + 1 < argc) {
-					int speed;
-					if (sscanf(argv[i+1], "%d", &speed) == 1) {
+					char * end;
+					long speed = strtol(argv[i+1], &end, 10);
+					if (end != argv[i+1] && *end == '\0') {
 						if (speed < 0) {
-							fprintf(stderr, "Error: Speed value must be non-negative (got %d)\n", speed);
+							fprintf(stderr, "Error: Speed value must be non-negative (got %ld)\n", speed);
+							fprintf(stderr, "Use --help for usage information\n");
+							exit(1);
+						}
+						if (speed > 3600000L) {
+							fprintf(stderr, "Error: Speed value %ld is too high (max 3600000)\n", speed);
 							fprintf(stderr, "Use --help for usage information\n");
 							exit(1);
 						}
 						if (speed > 10000) {
-							fprintf(stderr, "Warning: Speed value %d is very high (>10 seconds)\n", speed);
+							fprintf(stderr, "Warning: Speed value %ld is very high (>10 seconds)\n", speed);
 							fprintf(stderr, "Continuing anyway...\n");
 						}
-						SAMPLE_SPEED = speed;
+						SAMPLE_SPEED = (int)speed;
 						i++;  /* Skip next argument since we consumed it */
 					}
 					else {
